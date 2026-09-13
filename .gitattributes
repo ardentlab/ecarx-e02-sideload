@@ -1,0 +1,15 @@
+# Normalise line endings so the repo always stores LF, whatever OS a
+# contributor is on. Without this, a Windows checkout commits CRLF and every
+# later diff from a Linux/macOS contributor shows the whole file as changed.
+* text=auto eol=lf
+
+# Documentation
+*.md   text eol=lf
+LICENSE text eol=lf
+
+# Images — never touch these
+*.jpg  binary
+*.jpeg binary
+*.png  binary
+*.gif  binary
+*.webp binary

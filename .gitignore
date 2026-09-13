@@ -1,0 +1,45 @@
+# ─── OS and editor cruft ──────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+.vscode/
+.idea/
+
+# ─── Private working material ─────────────────────────────────────────
+# Anything kept locally for the maintainers' own reference and never meant
+# to be published.
+private/
+notes/
+scratch/
+*.private.md
+
+# ─── Firmware and device data — MUST NOT be committed ─────────────────
+# This repository documents methods only. Partition dumps, firmware images
+# and built artefacts are proprietary. They are blocked here by extension so
+# they cannot be added by accident — a `git add .` in a working folder that
+# also holds a dump is exactly how these things leak.
+#
+# Documentation images (.jpg / .png) are not affected by any rule below.
+*.bin
+*.img
+*.jar
+*.apk
+*.vdex
+*.odex
+*.art
+*.dex
+*.smali
+*.zip
+*.7z
+*.rar
+*.tar
+*.tar.gz
+*.tgz
+
+# Whole-dump folders, whatever they get named
+*_DUMP/
+*_dump/
+ORI/
+MOD/
