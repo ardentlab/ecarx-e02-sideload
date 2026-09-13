@@ -74,7 +74,7 @@ Every command in this guide runs in **Command Prompt** — that is what the **Wi
 | Micro JST GH 6-pin cable | 1.25 mm pitch, single connector, bare ends. Used for the two shorts in [Step 8](#step-8--enter-brom). |
 | A USB 2.0 port | The black ones. BROM handshake is unreliable on USB 3.0 ports on several laptops — if you have a choice, take USB 2.0. |
 
-![Micro JST GH 6-pin cable with the white connector on the right and bare tinned wire ends](images/jst-6pin-cable-connector.jpg)
+![Micro JST GH 6-pin cable with the white connector on the right and bare tinned wire ends](../images/jst-6pin-cable-connector.jpg)
 
 *Micro JST GH 6-pin cable, single connector. The connector plugs into the IHU; the bare ends are what you short in [Step 8](#step-8--enter-brom). GH series is 1.25 mm pitch — a 6-pin cable from any other JST series will not fit the port.*
 
@@ -311,11 +311,11 @@ The E02 is not a phone: there is no test point and no volume-button combination.
 
 ### 8.1 — Find the port
 
-![Side panel of the ECarX E02 chassis with the Micro JST GH port low down, next to a red TAP marking](images/jst-port-location.jpg)
+![Side panel of the ECarX E02 chassis with the Micro JST GH port low down, next to a red TAP marking](../images/jst-port-location.jpg)
 
 *Where to look: the port sits low on the side panel of the chassis. The red **TAP** marking here is hand-written — your unit will not have it.*
 
-![Close-up of the Micro JST GH port showing six gold pins inside a white plastic housing](images/jst-port-closeup.jpg)
+![Close-up of the Micro JST GH port showing six gold pins inside a white plastic housing](../images/jst-port-closeup.jpg)
 
 *The same port close up — six pins in a white housing. Count them against the table below before you push the connector in.*
 
@@ -330,7 +330,7 @@ The E02 is not a phone: there is no test point and no volume-button combination.
 | 5 | Yellow | UART TX | Not used here |
 | 6 | Red | 3.3V | Short to green |
 
-![Micro JST GH 6-pin cable with the wires fanned out, showing white, blue, yellow, green, black and red](images/jst-6pin-cable-wires.jpg)
+![Micro JST GH 6-pin cable with the wires fanned out, showing white, blue, yellow, green, black and red](../images/jst-6pin-cable-wires.jpg)
 
 *The six wire colours, matching the table above: white, blue, green, black, yellow, red.*
 
@@ -355,21 +355,21 @@ BROM is decided at the instant the SoC powers up, so both shorts must already be
 
 - **Disconnect IHU power.** Unplug **Socket Block A — Power**, the black connector sitting lowest in the ISO stack. Pulling the socket is what guarantees a true cold boot; standby is not enough.
 
-  ![The ISO connector block on the back of the IHU with all sockets plugged in](images/power-socket-before.jpg)
+  ![The ISO connector block on the back of the IHU with all sockets plugged in](../images/power-socket-before.jpg)
 
   *The ISO connectors as they normally sit, everything still plugged in.*
 
-  ![The same ISO connector block with a red box drawn around the black power socket at the bottom of the stack](images/power-socket-highlighted.jpg)
+  ![The same ISO connector block with a red box drawn around the black power socket at the bottom of the stack](../images/power-socket-highlighted.jpg)
 
   *Unplug the one in the red box: **Socket Block A — Power**, the black connector at the very bottom of the ISO stack.*
 
 - **Make both shorts on the JST jumper.** White↔blue, and green↔red. Join them properly — twisted and tinned, or soldered. A jumper you have to pinch by hand will let go at the worst possible moment, and a short that opens mid-session drops the unit straight out of BROM.
 
-  ![Micro JST GH cable with only four wires fitted, white joined to blue at one pair of ends and green joined to red at the other, bare tinned copper still showing](images/jst-jumper-shorted.jpg)
+  ![Micro JST GH cable with only four wires fitted, white joined to blue at one pair of ends and green joined to red at the other, bare tinned copper still showing](../images/jst-jumper-shorted.jpg)
 
   *The two joins made: white to blue, green to red. Yellow and black are left off the connector entirely — this guide never uses UART, so removing them removes any chance of a stray short.*
 
-  ![The same jumper with each shorted pair sealed inside its own piece of black heat shrink tubing, no copper visible](images/jst-jumper-shorted-insulated.jpg)
+  ![The same jumper with each shorted pair sealed inside its own piece of black heat shrink tubing, no copper visible](../images/jst-jumper-shorted-insulated.jpg)
 
   *The same jumper finished. Each join sits inside **its own** piece of heat shrink, with no copper showing anywhere. This is what it should look like before it goes near a powered unit — PVC tape works too if you have no heat gun.*
 
@@ -386,7 +386,7 @@ BROM is decided at the instant the SoC powers up, so both shorts must already be
 - **Plug the POWER socket back in.**
 - **Immediately plug the USB A-to-A cable**: IHU USB port → PC USB 2.0 port.
 
-  ![A laptop connected by a USB A-to-A cable to the car's centre-console USB socket, with the gear selector in P](images/usb-a-to-a-laptop-to-ihu.jpg)
+  ![A laptop connected by a USB A-to-A cable to the car's centre-console USB socket, with the gear selector in P](../images/usb-a-to-a-laptop-to-ihu.jpg)
 
   *The A-to-A cable running from the laptop to the car's centre-console USB socket. This is the **only** socket wired to the IHU. Every other USB port in the car is charge-only and will never enumerate, whatever cable you use.*
 
@@ -422,7 +422,7 @@ Preloader - Jumping to 0x200000: ok.
 
 In the GUI, the **Read partition(s)** tab should now list the unit's partitions with sizes — `boot_para`, `recovery`, `nvdata`, `metadata` and the rest. That list comes off the device's own GPT, so seeing it means the DA is running and the connection is fully established.
 
-![MTKClient 2.1.4 connected to an ECarX E02: the console log ends with Jumping to 0x200000 ok, and the Read partition(s) tab lists the partitions with sizes](images/mtkclient-connected-partition-list.png)
+![MTKClient 2.1.4 connected to an ECarX E02: the console log ends with Jumping to 0x200000 ok, and the Read partition(s) tab lists the partitions with sizes](../images/mtkclient-connected-partition-list.png)
 
 *A finished connection. The console ends on `Jumping to 0x200000: ok.` and the **Read partition(s)** tab is populated straight from the unit's own GPT.*
 

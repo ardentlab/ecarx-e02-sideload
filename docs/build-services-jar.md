@@ -81,19 +81,19 @@ IHU  services.vdex   ─(UART + factory su, copy to USB)→   your PC
 | Windows PC + Ubuntu WSL | All the conversion and patching work happens in WSL. |
 | ~2 GB free disk space | vdexExtractor source, the build toolchain, and the extracted smali tree. |
 
-![CH340G USB-to-TTL adapter seen from above, pin header labelled 5V, 3V3, TXD, RXD, GND](images/ch340g-adapter-front.jpg)
+![CH340G USB-to-TTL adapter seen from above, pin header labelled 5V, 3V3, TXD, RXD, GND](../images/ch340g-adapter-front.jpg)
 
 *CH340G adapter. The pin header is labelled `5V`, `3V3`, `TXD`, `RXD`, `GND`.*
 
-![The same CH340G adapter at an angle, showing the yellow voltage-select jumper](images/ch340g-adapter-angled.jpg)
+![The same CH340G adapter at an angle, showing the yellow voltage-select jumper](../images/ch340g-adapter-angled.jpg)
 
 *The yellow jumper selects the voltage. It must sit on **3V3**, never 5V.*
 
-![Micro JST GH 6-pin cable with the white connector on the right and bare tinned wire ends](images/jst-6pin-cable-connector.jpg)
+![Micro JST GH 6-pin cable with the white connector on the right and bare tinned wire ends](../images/jst-6pin-cable-connector.jpg)
 
 *Micro JST GH 6-pin cable, single connector. The connector plugs into the IHU; the bare ends go to the adapter.*
 
-![A plain USB-A flash drive photographed from above](images/usb-flash-drive-top.jpg)
+![A plain USB-A flash drive photographed from above](../images/usb-flash-drive-top.jpg)
 
 *Any small USB-A drive works, as long as it is formatted **FAT32**. It carries `services.vdex` off the IHU in [Step 3](#step-3--pull-servicesvdex-off-the-ihu).*
 
@@ -139,11 +139,11 @@ UART gives you a shell directly inside the IHU. That shell is how you pull `serv
 
 ### 2.1 — Micro JST GH port pinout
 
-![Side panel of the ECarX E02 chassis with the Micro JST GH port low down, next to a red TAP marking](images/jst-port-location.jpg)
+![Side panel of the ECarX E02 chassis with the Micro JST GH port low down, next to a red TAP marking](../images/jst-port-location.jpg)
 
 *Where to look: the port sits low on the side panel of the chassis. The red **TAP** marking here is hand-written, your unit will not have it.*
 
-![Close-up of the Micro JST GH port showing six gold pins inside a white plastic housing](images/jst-port-closeup.jpg)
+![Close-up of the Micro JST GH port showing six gold pins inside a white plastic housing](../images/jst-port-closeup.jpg)
 
 *The same port close up — six pins in a white housing. Count them against the table below before you push the connector in.*
 
@@ -184,7 +184,7 @@ UART gives you a shell directly inside the IHU. That shell is how you pull `serv
 > [!WARNING]
 > **Do not cut them off.** Blue, green and red are exactly the wires the [sideload guide](./sideload.md) shorts to enter BROM mode. Snip them and you throw away your recovery path — insulate, don't amputate.
 
-![Micro JST GH 6-pin cable with the wires fanned out, showing white, blue, yellow, green, black and red](images/jst-6pin-cable-wires.jpg)
+![Micro JST GH 6-pin cable with the wires fanned out, showing white, blue, yellow, green, black and red](../images/jst-6pin-cable-wires.jpg)
 
 *The six wire colours, matching the table above: white, blue, green, black, yellow, red.*
 
@@ -192,11 +192,11 @@ UART gives you a shell directly inside the IHU. That shell is how you pull `serv
 
 - Make sure the IHU **POWER socket is unplugged** before wiring anything — that is **Socket Block A — Power**, the black connector sitting lowest in the ISO stack
 
-  ![The ISO connector block on the back of the IHU with all sockets plugged in](images/power-socket-before.jpg)
+  ![The ISO connector block on the back of the IHU with all sockets plugged in](../images/power-socket-before.jpg)
 
   *The ISO connectors as they normally sit, everything still plugged in.*
 
-  ![The same ISO connector block with a red box drawn around the black power socket at the bottom of the stack](images/power-socket-highlighted.jpg)
+  ![The same ISO connector block with a red box drawn around the black power socket at the bottom of the stack](../images/power-socket-highlighted.jpg)
 
   *Unplug the one in the red box: **Socket Block A — Power**, the black connector at the very bottom of the ISO stack.*
 
@@ -222,15 +222,15 @@ UART gives you a shell directly inside the IHU. That shell is how you pull `serv
 > [!TIP]
 > **Tip:** Once the **UART** profile is saved you only need to double-click it next time. Right-click inside PuTTY pastes the clipboard — that is how you paste the commands in the following steps.
 
-![CH340G adapter from above with three jumper wires attached to the pin header](images/ch340g-jumper-wires-top.jpg)
+![CH340G adapter from above with three jumper wires attached to the pin header](../images/ch340g-jumper-wires-top.jpg)
 
 *Only three wires are used — yellow, black and white — on `TXD`, `RXD` and `GND`.*
 
-![The same three jumper wires at an angle, with the pin labels readable](images/ch340g-jumper-wires-angled.jpg)
+![The same three jumper wires at an angle, with the pin labels readable](../images/ch340g-jumper-wires-angled.jpg)
 
 *Angled view, so you can check each wire against its pin label.*
 
-![CH340G adapter joined by jumper wires to the Micro JST GH 6-pin cable, ready to plug into the IHU](images/ch340g-jst-cable-wired.jpg)
+![CH340G adapter joined by jumper wires to the Micro JST GH 6-pin cable, ready to plug into the IHU](../images/ch340g-jst-cable-wired.jpg)
 
 *The finished lead: adapter, three jumpers, and the JST GH cable that plugs into the IHU.*
 
