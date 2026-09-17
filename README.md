@@ -42,16 +42,27 @@ If your unit is not on this list, nothing here is known to apply to it. Posting 
 
 ## The guides
 
-Read them in this order. Each one is self-contained, but later guides assume the earlier ones are done.
+Grouped by what they do. Guides inside **Live Deploy — UART** build on each other; everything under **Apps & Tweaks** needs a unit that has already been through them.
+
+### Live Deploy — UART
+
+Root and sideload on the running system — flash two small files once, then everything else happens over UART. Read these in order.
 
 | # | Guide | What it covers |
 |---|---|---|
 | 1 | **[Install MTKClient from Source on Windows](docs/mtkclient-windows-install.md)** | Getting the flashing tool working, including a bug in the upstream GUI that makes it loop forever on this hardware. Everything else needs this first. |
 | 2 | **[Build services.jar for ECarX E02 Android 9](docs/build-services-jar.md)** | Turning the stock, odexed `services.vdex` from your own unit into a patched, sideload-enabled `services.jar`. You build it from your own firmware — nothing is distributed here. |
 | 3 | **[Sideload — Live Deploy over UART](docs/sideload.md)** | Back up every partition, flash `lk.bin` and `boot.bin` once, then deploy the jar on the running system over UART. |
-| 4 | **[Steering Wheel Button Remap](docs/steering-button-remap.md)** | Give the steering wheel buttons a second function (drive mode, voice, 360 camera) with an Xposed module hooked at runtime. No system file is modified. Builder script in [`scripts/`](scripts/build-steering-mod.sh). |
 
-Guide 2 needs only a UART console, so it can be done before or after guide 1. Guide 3 needs both. Guide 4 needs a rooted unit with Magisk, so it comes after guide 3.
+Guide 2 needs only a UART console, so it can be done before or after guide 1. Guide 3 needs both.
+
+### Apps & Tweaks
+
+Standalone changes for a unit that already has root and Magisk from guide 3. Each one stands alone — pick any, in any order.
+
+| Guide | Tested on | What it does |
+|---|---|---|
+| **[Steering Wheel Button Remap](docs/steering-button-remap.md)** | S70 · V333 | Short press on Hi Proton cycles the drive mode, holding the call button opens the 360 camera. Runtime Xposed hooks — no system file is modified. Builder script in [`scripts/`](scripts/build-steering-mod.sh). |
 
 ---
 
