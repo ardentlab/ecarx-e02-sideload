@@ -1,6 +1,6 @@
 # Sideload for ECarX E02 Android 9 — Live Deploy over UART
 
-Flash `lk.bin` and `boot.bin` once — everything after that is done on the running system over UART. Every command is copy-paste ready.
+Flash `lk.bin` and `boot.bin` once — everything after that is done on the running system over UART. Every command is ready to copy and paste, and all the paths update on their own once you enter your username below.
 
 **Brand:** Proton · **IHU:** ECarX E02 · **Android:** 9 · **Method:** UART + USB drive · **Flash:** lk + boot only
 
@@ -31,14 +31,14 @@ Flash `lk.bin` and `boot.bin` once — everything after that is done on the runn
 
 `Read First`
 
-This guide shows how to unlock APK sideloading on an ECarX E02 head unit (Proton X50 RC, S70, X90 — Android 9) by flashing **two small files once**, then doing everything else on the running system over UART.
+This guide shows how to turn on APK sideloading on an ECarX E02 head unit (Proton X50 RC, S70, X90 — Android 9). You flash **two small files once**, then do everything else on the running system over UART.
 
 > [!TIP]
-> **What gets flashed:** Two small files, one time — `lk.bin` (~1MB) and `boot.bin` (~32MB). That is the whole flashing stage, and the writing itself takes about five minutes. What takes longer is the full partition backup in [6.2](#62--back-up-every-partition-first) that comes before it — that is your only way back if anything goes wrong, so it is not the place to save time. Everything after the flash happens directly on the running system over UART, so deploying `services.jar` takes a few seconds.
+> **What gets flashed:** two small files, once — `lk.bin` (~1MB) and `boot.bin` (~32MB). That is the whole flashing stage, and the writing itself takes about five minutes. The slow part is the full partition backup in [6.2](#step-6--backup-unlock--flash) before it — that is your only way back if anything goes wrong, so do not rush it. Everything after the flash happens right on the running system over UART, so deploying `services.jar` takes a few seconds.
 
 **What actually blocks installs:**
 
-Stock firmware ships `/system/framework/services.jar` as a **183-byte stub** — an empty file. The real one is about 3.7MB and holds a real `classes.dex`. Because of that stub, `pm install` is blocked completely. Replace the file with the real one and the block disappears. That is the whole point of this method; every other step just gets you there safely.
+On stock firmware, `/system/framework/services.jar` is a **183-byte stub** — basically an empty file. The real one is about 3.7MB and holds a real `classes.dex`. Because of that stub, `pm install` is fully blocked. Replace the file with the real one and the block is gone. That is the whole point of this method; every other step just gets you there safely.
 
 **The full flow:**
 
@@ -51,10 +51,10 @@ Phase 4  Finish up       → Magisk, File Manager, SwipeBack
 ```
 
 > [!WARNING]
-> **Where does root come from?** Not from Magisk. ECarX leaves a binary at `/system/xbin/su` in stock firmware — setuid root, group shell. Since the UART shell runs as uid `shell`, that binary hands you root directly. Magisk does something else entirely: it disables dm-verity so `/system` becomes **writable**. Two separate things, and you need both.
+> **Where does root come from?** Not from Magisk. ECarX leaves a binary at `/system/xbin/su` in stock firmware — setuid root, group shell. Since the UART shell runs as the `shell` user, that binary gives you root directly. Magisk does something else: it turns off dm-verity so `/system` becomes **writable**. Two separate things, and you need both.
 
 > [!CAUTION]
-> **Risk:** This process unlocks and modifies a car head unit. A wrong flash can brick the IHU. Follow every step in order, don't skip. All original files are `renamed`, never deleted — so if it bootloops you can recover over UART. Keep the `ORI` folder safe.
+> **Risk:** this unlocks and changes a car head unit. A wrong flash can brick the IHU. Follow every step in order and do not skip. All original files are `renamed`, never deleted — so if it bootloops you can recover over UART. Keep the `ORI` folder safe.
 
 ## Step 1 — Prerequisites
 
@@ -89,22 +89,22 @@ Phase 4  Finish up       → Magisk, File Manager, SwipeBack
 *Any small USB-A drive works, as long as it is formatted **FAT32**. It carries the files onto the IHU in [Step 9](#step-9--deploy-servicesjar).*
 
 > [!CAUTION]
-> **Before you buy anything else, get heat shrink or electrical tape.** The Micro JST GH cable arrives with six bare tinned ends. Three (yellow, black, white) are your permanent UART wires; the other three — blue, green and red — you short only briefly in [Step 6](#step-6--backup-unlock--flash) for BROM, and the rest of the time they sit bare and live next to your working wires, with red carrying **3.3V from the IHU** whenever the unit is powered. Cover them whenever you are not deliberately shorting them. Full detail in [Step 7.1](#step-7--connect-uart).
+> **Before you buy anything else, get heat shrink or electrical tape.** The Micro JST GH cable comes with six bare tinned ends. Three (yellow, black, white) are your permanent UART wires. The other three — blue, green and red — you short only briefly in [Step 6](#step-6--backup-unlock--flash) for BROM; the rest of the time they sit bare and live next to your working wires, with red carrying **3.3V from the IHU** whenever the unit is on. Cover them whenever you are not shorting them on purpose. Full detail in [Step 7.1](#step-7--connect-uart).
 
 ### 1.2 — Software on the PC
 
 | Software | Used for |
 |---|---|
-| MTKClient | Unlock the bootloader and flash lk.bin & boot.bin. Use the original [bkerler/mtkclient](https://github.com/bkerler/mtkclient) installed from source at `C:\mtkclient`. The [MTKClient Windows install guide](./mtkclient-windows-install.md) walks the whole setup, including the GUI bug that otherwise loops "Handshake failed, retrying" forever on an E02. |
-| UsbDk + WinFsp | So Windows can see the IHU in BROM mode. UsbDk is the one that does the work — [daynix/UsbDk releases](https://github.com/daynix/UsbDk/releases), file `UsbDk_1.0.22_x64.msi`. WinFsp ([winfsp.dev/rel](https://winfsp.dev/rel/)) is only needed for MTKClient's optional filesystem mount, which this guide never uses — you can skip it. |
-| Python 3 + Git | MTKClient dependencies. [python.org/downloads](https://www.python.org/downloads/) and [git-scm.com/download/win](https://git-scm.com/download/win). Tick **"Add python.exe to PATH"** on the first installer screen — miss it and `python` sends you to the Microsoft Store instead of running. |
-| PuTTY 64-bit | Serial terminal for UART. This is where most of the work happens. Take `putty-64bit-*-installer.msi` from [the official PuTTY page](https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html). |
-| CH340G driver | So the COM port shows up in Device Manager. From the chip maker, WCH: [CH341SER driver](https://www.wch-ic.com/downloads/CH341SER_EXE.html) — the same package covers the CH340/CH340G. |
+| MTKClient | Unlock the bootloader and flash lk.bin & boot.bin. Use the original [bkerler/mtkclient](https://github.com/bkerler/mtkclient) installed from source at `C:\mtkclient`. The [MTKClient Windows install guide](./mtkclient-windows-install.md) covers the whole setup, including the GUI bug that otherwise loops "Handshake failed, retrying" forever on an E02. |
+| UsbDk + WinFsp | So Windows can see the IHU in BROM mode. UsbDk does the work — [daynix/UsbDk releases](https://github.com/daynix/UsbDk/releases), file `UsbDk_1.0.22_x64.msi`. WinFsp ([winfsp.dev/rel](https://winfsp.dev/rel/)) is only for MTKClient's optional filesystem mount, which this guide never uses — you can skip it. |
+| Python 3 + Git | MTKClient dependencies. [python.org/downloads](https://www.python.org/downloads/) and [git-scm.com/download/win](https://git-scm.com/download/win). Tick **"Add python.exe to PATH"** on the first installer screen — miss it and `python` opens the Microsoft Store instead of running. |
+| PuTTY 64-bit | The serial terminal for UART. This is where most of the work happens. Take `putty-64bit-*-installer.msi` from [the official PuTTY page](https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html). |
+| CH340G driver | So the COM port appears in Device Manager. From the chip maker, WCH: [CH341SER driver](https://www.wch-ic.com/downloads/CH341SER_EXE.html) — the same package covers the CH340/CH340G. |
 | Ubuntu WSL | Install with `wsl --install` in PowerShell as Administrator — [Microsoft's reference](https://learn.microsoft.com/en-us/windows/wsl/install). |
 
 ### 1.3 — Install WSL & its tools
 
-First install Ubuntu WSL itself. Run this in **PowerShell as Administrator**, then reboot. Skip it if `wsl -l -v` already lists an Ubuntu distro.
+First install Ubuntu WSL itself. Run this in **PowerShell as Administrator**, then restart Windows. Skip it if `wsl -l -v` already lists an Ubuntu distro.
 
 **PowerShell** — Install Ubuntu WSL
 ```text
@@ -125,7 +125,7 @@ sudo apt-get install -y python3
 |---|---|---|
 | `lk.bin` | ~1MB | Original firmware from your own unit. **Must match your model and version.** |
 | `boot.bin` | ~32MB | Original firmware from your own unit. |
-| `services.jar` (modified) | ~3.7MB | Built from your own unit's firmware — see the [Build services.jar guide](./build-services-jar.md). The single most important file in the whole guide. |
+| `services.jar` (modified) | ~3.7MB | Built from your own unit's firmware — see the [Build services.jar guide](./build-services-jar.md). The most important file in the whole guide. |
 | `Magisk.apk` | ~11MB | Official releases only — [github.com/topjohnwu/Magisk/releases](https://github.com/topjohnwu/Magisk/releases). Take the `Magisk-vXX.X.apk` asset from the newest release — never a repackaged copy from a mirror site. |
 | `Files.apk` | — | File Manager+ (`com.alphainventor.filemanager`) from [APKPure](https://apkpure.com/file-manager/com.alphainventor.filemanager). Take an **arm64-v8a** build that still supports Android 9. |
 | `SwipeBack.apk` | ~1MB | Optional. Swipe-back button (`ace.jun.simpleback`) from [APKPure](https://apkpure.com/swipe-back/ace.jun.simpleback). |
@@ -135,8 +135,18 @@ sudo apt-get install -y python3
 
 ## Step 2 — Config & Folders
 
-**WSL** — Set your paths once, at the top of the session
+`WSL Ubuntu`
 
+### 2.1 — Find your Windows username
+
+**WSL** — List Windows users
+```bash
+ls /mnt/c/Users/
+```
+
+Ignore `All Users`, `Default`, `Public` and `desktop.ini`. Those are Windows system entries. Whatever is left is your username.
+
+**WSL** — Set your paths once, at the top of the session
 ```bash
 # Your Windows username — the folder name under C:\Users\
 export WINUSER="your-windows-username"
@@ -148,31 +158,17 @@ export DESKTOP="/mnt/c/Users/$WINUSER/OneDrive/Desktop"
 ls "$DESKTOP"        # sanity check: this must list your Desktop
 ```
 
-Every command below uses `$DESKTOP`, so this is the only place you type your
-username. Nothing else needs editing.
+Every command below uses `$DESKTOP`, so this is the only place you type your username. Nothing else needs editing.
 
 > [!WARNING]
-> These variables live only in the shell you set them in. Close the terminal,
-> or open a second one, and they are gone — run the block above again before
-> continuing, or the commands will write to the wrong place.
-
-`WSL Ubuntu`
-
-### 2.1 — Find your Windows username
-
-**WSL** — List Windows users
-```bash
-ls /mnt/c/Users/
-```
-
-Ignore `All Users`, `Default`, `Public` and `desktop.ini` — those are Windows system entries. Whatever is left is your username.
+> These variables live only in the shell you set them in. Close the terminal, or open a second one, and they are gone — run the block above again before continuing, or the commands will write to the wrong place.
 
 > [!TIP]
-> If OneDrive sync is ON, your Desktop lives at `C:\Users\NAME\OneDrive\Desktop`. If it is OFF, it is at `C:\Users\NAME\Desktop`. Pick whichever one actually holds your files — get this wrong and every command below will say "No such file or directory".
+> If OneDrive sync is ON, your Desktop is at `C:\Users\NAME\OneDrive\Desktop`. If it is OFF, it is at `C:\Users\NAME\Desktop`. Pick the one that really holds your files — pick wrong and every command below says "No such file or directory".
 
 ### 2.2 — Set the BASE path
 
-Run this every time you open a new WSL session. `export` does not survive closing the terminal, and the patch script in Step 4 reads this variable.
+Run this every time you open a new WSL session. `export` is lost when you close the terminal, and the patch script in Step 4 reads this variable.
 
 **WSL** — Set BASE
 ```bash
@@ -198,7 +194,7 @@ ls "$BASE"
 
 ### 3.1 — Put lk.bin and boot.bin into ORI
 
-Put your unit's original `lk.bin` and `boot.bin` directly on the Desktop, named exactly like that, then run:
+Put your unit's original `lk.bin` and `boot.bin` straight on the Desktop, named exactly like that, then run:
 
 **WSL** — Copy originals into ORI
 ```bash
@@ -221,25 +217,42 @@ ls -lh "$BASE/MOD/services.jar"
 ```
 
 > [!TIP]
-> **You should see something like this:** **Output** Expected output -rwxrwxrwx 1 user user 3.7M ... /mnt/c/.../IHU_DEPLOY/MOD/services.jar What matters is that it is about 3.7MB — definitely not 183 bytes (the stub). Your exact size will differ slightly from the example above.
+> **You should see something like this:**
+
+**Output** — Expected output
+```text
+-rwxrwxrwx 1 user user 3.7M ... /mnt/c/.../IHU_DEPLOY/MOD/services.jar
+```
+
+> [!TIP]
+> What matters is that it is about 3.7MB — not 183 bytes (the stub). Your exact size will differ a little from the example above.
 
 > [!CAUTION]
-> **If the size is 183 bytes:** that is the stub, not the real file. The real one is about 3.7MB and contains a `classes.dex` inside. Do not continue with the stub — `pm install` will stay blocked.
+> **If the size is 183 bytes:** that is the stub, not the real file. The real one is about 3.7MB with a `classes.dex` inside. Do not go on with the stub — `pm install` will stay blocked.
 
 > [!WARNING]
-> **Built the jar yourself?** Confirm it is `dex 039`: `unzip -p services.jar classes.dex | head -c 8 | xxd` must read `dex 039`. A `dex 035` build loads and boots but leaves installs blocked — rebuild it with `smali a -a 28` (see the Build guide).
+> **Built the jar yourself?** Confirm it is `dex 039`: `unzip -p services.jar classes.dex | head -c 8 | xxd` must read `dex 039`. A `dex 035` build loads and boots but keeps installs blocked — rebuild it with `smali a -a 28` (see the Build guide).
 
 ## Step 4 — Patch lk.bin
 
 `WSL Ubuntu`
 
-After the bootloader is unlocked, the IHU shows an **orange state** warning screen on every boot. This patch removes it for good. The script finds the offset by itself — nothing to edit.
+After the bootloader is unlocked, the IHU shows an **orange state** warning screen on every boot. This patch removes it for good. The script finds the offset on its own — nothing to edit.
 
 > [!WARNING]
 > **How it works:** The script scans `lk.bin` for the byte pattern `0E 4B 7B 44`, then confirms the right one by checking for the ARM Thumb function prologue `08 B5` (`PUSH {r3,lr}`) just before it. Those four bytes are replaced with `00 20 08 BD` (`MOVS r0,#0 / POP {r3,pc}`), which makes the check function return immediately.
 
 > [!TIP]
-> **Confirmed offsets:** Model Firmware Offset Proton X50 RC V144 `0x0003B392` Proton S70 V333 `0x0003C0FE` Proton X90 V735 `0x0003C0FE` The offset differs per model — that is normal. The script handles it.
+> **Confirmed offsets:**
+
+| Model | Firmware | Offset |
+|---|---|---|
+| Proton X50 RC | V144 | `0x0003B392` |
+| Proton S70 | V333 | `0x0003C0FE` |
+| Proton X90 | V735 | `0x0003C0FE` |
+
+> [!TIP]
+> The offset is different on each model — that is normal. The script handles it.
 
 ### 4.1 — Copy lk.bin into MOD
 
@@ -259,16 +272,31 @@ echo aW1wb3J0IHN5cywgb3MKYmFzZSA9IG9zLmVudmlyb25bIkJBU0UiXQpvcmkgPSBvcGVuKGJhc2U
 ```
 
 > [!TIP]
-> **You should see something like this:** **Output** Example — X50 RC V144 [+] Found at offset : 0x0003B392 (decimal: 242578) [+] Original bytes : 0E 4B 7B 44 [+] Patch written : 00 20 08 BD [OK] PATCH SUCCESSFUL Offset : 0x0003B392 Bytes : 00 20 08 BD ORI file : untouched The line that matters is `[OK] PATCH SUCCESSFUL`.
+> **You should see something like this:**
+
+**Output** — Example — X50 RC V144
+```text
+[+] Found at offset : 0x0003B392 (decimal: 242578)
+[+] Original bytes  : 0E 4B 7B 44
+[+] Patch written   : 00 20 08 BD
+
+[OK] PATCH SUCCESSFUL
+     Offset   : 0x0003B392
+     Bytes    : 00 20 08 BD
+     ORI file : untouched
+```
+
+> [!TIP]
+> The line that matters is `[OK] PATCH SUCCESSFUL`.
 
 > [!CAUTION]
-> **If it says "Pattern not found":** stop. Either your firmware version is not confirmed yet, or that `lk.bin` did not come from your unit. Do not continue.
+> **If it says "Pattern not found":** stop. Either your firmware version is not confirmed yet, or that `lk.bin` did not come from your unit. Do not go on.
 
 ## Step 5 — Patch boot.bin (Magisk)
 
 `Android Phone`
 
-Magisk gets in by patching the boot image with the Magisk app on an Android phone. This is what disables dm-verity — without it, `/system` will never become writable, even with root.
+Magisk gets in by patching the boot image with the Magisk app on an Android phone. This is what turns off dm-verity — without it, `/system` will never become writable, even with root.
 
 ### 5.1 — Send boot.bin to the phone
 
@@ -298,6 +326,8 @@ ls "$DESKTOP/" | grep magisk_patched
 
 ### 5.4 — Enter that filename here
 
+Use that exact filename in the command below, in place of `magisk_patched_XXXXX.img`.
+
 ### 5.5 — Copy it in as MOD/boot.bin
 
 **WSL** — Copy & rename
@@ -307,7 +337,7 @@ ls -lh "$BASE/MOD/"
 ```
 
 > [!TIP]
-> Renaming `.img` to `.bin` is completely safe — the extension is only a label, the contents do not change. Your `MOD` folder should now hold `lk.bin` (~1MB), `boot.bin` (~32MB) and `services.jar` (~3.7MB).
+> Renaming `.img` to `.bin` is safe — the extension is just a label, the contents do not change. Your `MOD` folder should now hold `lk.bin` (~1MB), `boot.bin` (~32MB) and `services.jar` (~3.7MB).
 
 ## Step 6 — Backup, Unlock & Flash
 
@@ -316,7 +346,7 @@ ls -lh "$BASE/MOD/"
 This is the only time you use MTKClient. Everything after this happens over UART. If it is not installed yet, set it up first with the [MTKClient Windows install guide](./mtkclient-windows-install.md) and come back once its partition list loads.
 
 > [!CAUTION]
-> **Power must stay stable.** Never let the IHU lose power during a BROM operation. Also, unlocking the bootloader **wipes userdata** — settings and Bluetooth pairings are gone. That is expected.
+> **Power must stay steady.** Never let the IHU lose power during a BROM operation. Also, unlocking the bootloader **wipes userdata** — settings and Bluetooth pairings are gone. That is expected.
 
 ### 6.1 — Enter BROM mode
 
@@ -344,48 +374,35 @@ This is the only time you use MTKClient. Everything after this happens over UART
 On the JST GH cable, short **white (GND) ↔ blue (Recovery)** and **green (USB) ↔ red (3.3V)**.
 
 - **Disconnect IHU power.** Unplug **Socket Block A — Power**, the black connector sitting lowest in the ISO stack. Pulling the socket is what guarantees a true cold boot; standby is not enough.
-
   ![The ISO connector block on the back of the IHU with all sockets plugged in](../images/power-socket-before.jpg)
-
   *The ISO connectors as they normally sit, everything still plugged in.*
-
   ![The same ISO connector block with a red box drawn around the black power socket at the bottom of the stack](../images/power-socket-highlighted.jpg)
-
   *Unplug the one in the red box: **Socket Block A — Power**, the black connector at the very bottom of the ISO stack.*
-
 - **Make both shorts on the JST jumper.** White↔blue, and green↔red. Join them properly — twisted and tinned, or soldered. A jumper you have to pinch by hand will let go at the worst possible moment, and a short that opens mid-flash is exactly how a unit gets bricked.
-
   ![Micro JST GH cable with only four wires fitted, white joined to blue at one pair of ends and green joined to red at the other, bare tinned copper still showing](../images/jst-jumper-shorted.jpg)
-
   *The two joins made: white to blue, green to red. Yellow and black are left off the connector entirely — they are the UART pair, unused during flashing.*
-
   ![The same jumper with each shorted pair sealed inside its own piece of black heat shrink tubing, no copper visible](../images/jst-jumper-shorted-insulated.jpg)
-
   *The same jumper finished. Each join sits inside **its own** piece of heat shrink, with no copper showing anywhere. This is what it should look like before it goes near a powered unit — PVC tape works if you have no heat gun.*
-
 - **Plug the JST jumper into the IHU port** — the one shown at the top of this step.
 - **Start MTKClient** (`gui.bat` → Run as administrator) and wait until it says "Waiting for connection". The tool must be listening before the unit boots, not after.
 - **Plug the POWER socket back in.**
 - **Immediately plug the USB male-to-male cable**: IHU USB port → PC USB 2.0 port.
-
   ![A laptop connected by a USB A-to-A cable to the car's centre-console USB socket, with the gear selector in P](../images/usb-a-to-a-laptop-to-ihu.jpg)
-
   *The A-to-A cable running from the laptop to the car's centre-console USB socket. This is the **only** socket wired to the IHU. Every other USB port in the car is charge-only and will never enumerate, whatever cable you use.*
-
 - MTKClient detects it and connects on its own.
 
 > [!CAUTION]
 > **Two ways to get the shorts wrong, and both cost you hardware.**
 >
-> - **Wrong pair.** Red is a live 3.3 V rail whenever the unit is powered. Red touching white is a dead short straight across the IHU's 3.3 V supply. There are exactly two joins on this jumper — **white↔blue** and **green↔red** — and nothing else may touch. Check the colours twice before the tube goes on, because once it is shrunk you cannot see what is underneath.
-> - **Bare copper left showing.** A join you tinned but never covered will find the other pair the first time the cable shifts — and it shifts every session. Cover each join completely, past the tip, not just over the middle.
+> - **Wrong pair.** Red is a live 3.3 V rail whenever the unit is powered. Red touching white shorts the IHU's 3.3 V supply. There are exactly two joins on this jumper — **white↔blue** and **green↔red** — and nothing else may touch. Check the colours twice before the tube goes on, because once it is shrunk you cannot see underneath.
+> - **Bare copper left showing.** A join you tinned but never covered will touch the other pair the first time the cable moves — and it moves every session. Cover each join fully, past the tip, not just over the middle.
 >
-> Sleeve the two joins **separately**. Bundling both pairs into one lump of tape or one length of tube is precisely how white↔blue ends up touching green↔red.
+> Sleeve the two joins **on their own**. Wrapping both pairs into one lump of tape, or one length of tube, is exactly how white↔blue ends up touching green↔red.
 
 ### 6.2 — Back up every partition first
 
 > [!CAUTION]
-> **Do this before you erase or unlock anything. It is the most important step on this page.** ECarX does not publish firmware for these units. There is no official image to download, no vendor recovery tool, and nobody else's dump will fully do — `nvdata` and `proinfo` carry calibration and serial data unique to your board. The dump you take right now is the only original copy of your unit that will ever exist. Take it, and almost any mistake later is recoverable. Skip it, and a bad flash means a dead head unit and a trip to the dealer.
+> **Do this before you erase or unlock anything. It is the most important step on this page.** ECarX does not publish firmware for these units. There is no official image to download, no vendor recovery tool, and nobody else's dump will fully do — `nvdata` and `proinfo` hold calibration and serial data unique to your board. The dump you take now is the only original copy of your unit that will ever exist. Take it, and almost any later mistake is recoverable. Skip it, and a bad flash means a dead head unit and a trip to the dealer.
 
 You are still connected in BROM from 6.1, so stay where you are and go to the **Read partition(s)** tab:
 
@@ -396,13 +413,13 @@ You are still connected in BROM from 6.1, so stay where you are and go to the **
 - Leave it alone until every partition reports done. Do not touch the USB cable, the jumper or the power while it runs
 
 > [!WARNING]
-> **Why userdata is the exception.** It is by far the largest partition on the unit — tens of gigabytes, against a few hundred megabytes for everything else combined — so reading it can take hours. It also holds nothing you need: it is your settings, accounts and Bluetooth pairings, and unlocking the bootloader in [6.4](#64--unlock-the-bootloader) wipes it anyway. Backing it up buys you nothing and costs most of an evening. Every *other* partition is small, and one of them missing is what turns a recoverable mistake into a brick.
+> **Why userdata is the exception.** It is by far the largest partition on the unit — tens of gigabytes, against a few hundred megabytes for everything else put together — so reading it can take hours. It also holds nothing you need: your settings, accounts and Bluetooth pairings, and unlocking the bootloader in [6.4](#step-6--backup-unlock--flash) wipes it anyway. Backing it up gains you nothing and costs most of an evening. Every *other* partition is small, and one of them missing is what turns a fixable mistake into a brick.
 
 > [!TIP]
-> **Check the dump before moving on.** Open the folder and confirm the files are actually there and none of them are 0 bytes. A read that was interrupted still leaves files behind, and finding that out later — when you need them — is too late.
+> **Check the dump before you move on.** Open the folder and confirm the files are really there and none of them are 0 bytes. A read that got interrupted still leaves files behind, and finding that out later — when you need them — is too late.
 
 > [!TIP]
-> **Then put the dump somewhere it cannot be lost.** Not the Desktop, not a folder you will clear out next month. A separate drive, and a second copy elsewhere if you can. The ones that matter most for recovery are `lk`, `boot`, `system`, `seccfg`, `nvdata`, `nvcfg` and `proinfo`. `system` is the largest of these by a wide margin, and it is the one you overwrite if you ever go near a modified `system.bin` — without a stock copy there is no way back from that.
+> **Then put the dump somewhere safe.** Not the Desktop, not a folder you will clear out next month. A separate drive, and a second copy somewhere else if you can. The ones that matter most for recovery are `lk`, `boot`, `system`, `seccfg`, `nvdata`, `nvcfg` and `proinfo`. `system` is much larger than the rest, and it is the one you overwrite if you ever touch a modified `system.bin` — without a stock copy there is no way back from that.
 
 ### 6.3 — Erase partitions
 
@@ -413,7 +430,7 @@ Go to the **Erase partition(s)** tab and erase these:
 - `md_udc` (only if it appears in the list)
 
 > [!WARNING]
-> **Erase first, unlock after.** Skipping this can leave the IHU bootlooping after the flash.
+> **Erase first, unlock after.** Skip this and the IHU can bootloop after the flash.
 
 ### 6.4 — Unlock the bootloader
 
@@ -423,39 +440,39 @@ Go to the **Erase partition(s)** tab and erase these:
 
 You are still in BROM mode from the unlock, so just switch to the **Write partition(s)** tab:
 
-- Click **Add files manually** — avoid "Select from directory", it picks the wrong file too easily
+- Click **Add files manually** — do not use "Select from directory", it picks the wrong file too easily
 - `MOD/lk.bin` → partition `lk`
 - `MOD/boot.bin` → partition `boot`
 - Double-check both come from the **MOD** folder, not ORI
 - Click **Write**
 
 > [!TIP]
-> Both finish in 2–5 minutes. Then shut it down **in this order**: unplug the **POWER socket first**, then the USB cable, then remove the JST jumper. **Leave the power unplugged** — that is exactly where [Step 7](#step-7--connect-uart) begins, so there is nothing to switch on yet.
+> Both finish in 2–5 minutes. Then shut it down **in this order**: unplug the **POWER socket first**, then the USB cable, then remove the JST jumper. **Leave the power unplugged** — that is exactly where [Step 7](#step-7--connect-uart) starts, so there is nothing to switch on yet.
 
 > [!TIP]
-> Whenever the unit does next boot, the orange state screen **will not** appear, because lk.bin is already patched. You do not need to boot it now to check — the flash either reported success in MTKClient or it did not.
+> Whenever the unit next boots, the orange state screen **will not** show, because lk.bin is already patched. You do not need to boot it now to check — the flash either reported success in MTKClient or it did not.
 
 > [!CAUTION]
-> **Never pull the JST jumper while the unit is powered.** Red is a live 3.3 V rail, the joined ends sit millimetres apart, and a jumper being tugged out is exactly when they meet. Power off first, every time — there is no situation where the jumper needs to come out with the unit live.
+> **Never pull the JST jumper while the unit is on.** Red is a live 3.3 V rail, the joined ends sit millimetres apart, and tugging the jumper out is exactly when they meet. Power off first, every time — there is no reason the jumper ever needs to come out with the unit live.
 
 > [!CAUTION]
-> **If a flash fails halfway:** do not cut power. Re-enter BROM and try again. If it bootloops, flash `ORI/lk.bin` and `ORI/boot.bin` back to recover. If something worse goes wrong, the dump you took in [6.2](#62--back-up-every-partition-first) is what puts the unit back.
+> **If a flash fails halfway:** do not cut power. Re-enter BROM and try again. If it bootloops, flash `ORI/lk.bin` and `ORI/boot.bin` back to recover. If something worse happens, the dump you took in [6.2](#step-6--backup-unlock--flash) is what puts the unit back.
 
 ## Step 7 — Connect UART
 
 `UART · PuTTY`
 
-UART gives you a shell directly inside the IHU. From here on, **everything happens here**. No ADB needed at all.
+UART gives you a shell inside the IHU. From here on, **everything happens here**. No ADB needed at all.
 
 > [!CAUTION]
-> **3.3V only.** Confirm the CH340G is set to 3.3V before connecting anything. 5V will damage the IHU UART pins beyond repair.
+> **3.3V only.** Check the CH340G is set to 3.3V before you connect anything. 5V will damage the IHU UART pins for good.
 
 ### 7.1 — Insulate the unused wires
 
-Port location and the full six-pin table are in [Step 6.1](#step-6--backup-unlock--flash). This section is about what to do with the three wires you are *not* using once flashing is done.
+Port location and the full six-pin table are in [Step 6.1](#step-6--backup-unlock--flash). This part is about what to do with the three wires you are *not* using once flashing is done.
 
 > [!TIP]
-> **For the UART work you only need three wires:** yellow, black and white to the CH340G. Green, blue and red are shorted only in [Step 6](#step-6--backup-unlock--flash) for BROM; once flashing is done, keep them insulated for all the UART work below — leave the green pin un-shorted or the USB drive in [Step 9](#step-9--deploy-servicesjar) will not mount.
+> **For the UART work you only need three wires:** yellow, black and white to the CH340G. Green, blue and red are shorted only in [Step 6](#step-6--backup-unlock--flash) for BROM; once flashing is done, keep them covered for all the UART work below — leave the green pin un-shorted, or the USB drive in [Step 9](#step-9--deploy-servicesjar) will not mount.
 
 > [!CAUTION]
 > **Insulate blue, green and red before the UART working phase. This is the highest-risk part of the hardware setup.** You short these three in [Step 6](#step-6--backup-unlock--flash) for BROM, but from here on you are in plain UART and they must not be shorted or left bare. Their ends are **bare tinned copper**, and while the unit is powered:
@@ -505,7 +522,15 @@ Port location and the full six-pin table are in [Step 6.1](#step-6--backup-unloc
 *The finished lead: adapter, three jumpers, and the JST GH cable that plugs into the IHU.*
 
 > [!TIP]
-> **The prompt should look like this:** **Output** Expected prompt console:/ $ The `$` means you are **not** root yet. That is normal — Step 8 handles it.
+> **The prompt should look like this:**
+
+**Output** — Expected prompt
+```text
+console:/ $
+```
+
+> [!TIP]
+> The `$` means you are **not** root yet. That is normal — Step 8 handles it.
 
 > [!WARNING]
 > **No text at all in PuTTY?** TX and RX are probably swapped. Swap those two wires and reconnect. Also confirm the speed is exactly `921600`.
@@ -514,10 +539,10 @@ Port location and the full six-pin table are in [Step 6.1](#step-6--backup-unloc
 
 `UART · PuTTY`
 
-This is where most people get stuck. Your root does **not** come from Magisk at this stage.
+This is where most people get stuck. At this stage your root does **not** come from Magisk.
 
 > [!TIP]
-> **Why a plain `su` fails:** Once Magisk is flashed, `/sbin` comes first in PATH. Typing `su` on its own hits MagiskSU — and MagiskSU needs the Magisk app installed before it can approve the request. The app is not there yet, so it denies you with `Permission denied`. But ECarX leaves `/system/xbin/su` in stock firmware — `-rwsr-x--- root shell`. Setuid root, group shell. Your UART shell is uid 2000 (shell), so that binary hands you root with no conditions at all.
+> **Why a plain `su` fails:** once Magisk is flashed, `/sbin` comes first in PATH. Typing `su` on its own hits MagiskSU — and MagiskSU needs the Magisk app installed before it can approve the request. The app is not there yet, so it denies you with `Permission denied`. But ECarX leaves `/system/xbin/su` in stock firmware — `-rwsr-x--- root shell`. Setuid root, group shell. Your UART shell is uid 2000 (shell), so that binary gives you root with no conditions at all.
 
 ### 8.1 — Call the factory su by full path
 
@@ -527,7 +552,16 @@ This is where most people get stuck. Your root does **not** come from Magisk at 
 ```
 
 > [!TIP]
-> **The prompt should change:** **Output** Expected console:/ $ /system/xbin/su console:/ # The `#` means you have root.
+> **The prompt should change:**
+
+**Output** — Expected
+```text
+console:/ $ /system/xbin/su
+console:/ #
+```
+
+> [!TIP]
+> The `#` means you have root.
 
 ### 8.2 — Remount /system as writable
 
@@ -538,7 +572,12 @@ mount | grep ' /system '
 ```
 
 > [!TIP]
-> **The output must contain `rw`:** **Output** Expected output /dev/block/mmcblk0p42 on /system type ext4 (rw,seclabel,relatime,...)
+> **The output must contain `rw`:**
+
+**Output** — Expected output
+```text
+/dev/block/mmcblk0p42 on /system type ext4 (rw,seclabel,relatime,...)
+```
 
 > [!CAUTION]
 > **Still shows `ro`?** Your boot.bin was patched with `Preserve AVB 2.0 / dm-verity` ticked. Go back to Step 5, patch again with that option **unticked**, and reflash boot.
@@ -550,16 +589,16 @@ mount | grep ' /system '
 
 `UART · PuTTY`
 
-This is the core of the method. We swap `services.jar` and clear the old cache so the system actually loads the new jar.
+This is the heart of the method. We swap `services.jar` and clear the old cache so the system actually loads the new jar.
 
-The jar itself is the one you staged into `$BASE/MOD/` back in [Step 3.2](#step-3--collect-files). If you landed straight on this step without one, it is built from your own unit's firmware in the [Build services.jar guide](./build-services-jar.md). A stock jar will not work, and one built against a different firmware version may not either.
+The jar is the one you staged into `$BASE/MOD/` back in [Step 3.2](#step-3--collect-files). If you jumped straight here without one, you build it from your own unit's firmware in the [Build services.jar guide](./build-services-jar.md). A stock jar will not work, and one built against a different firmware version may not either.
 
 > [!CAUTION]
-> **Why the cache has to go:** Android loads the compiled `.odex` / `.vdex` / `.art` files, **not** the jar. Swap the jar but leave the old cache behind and the IHU keeps running the original code — your new jar just sits there unused. This is the number one reason for "I deployed it but installs are still blocked".
+> **Why the cache has to go:** Android loads the compiled `.odex` / `.vdex` / `.art` files, **not** the jar. Swap the jar but leave the old cache and the IHU keeps running the original code — your new jar just sits there unused. This is the number one reason for "I deployed it but installs are still blocked".
 
 ### 9.1 — Copy the files onto a USB drive
 
-The drive must be **FAT32**. Create a folder called `mod` at the root of the drive and put these inside:
+The drive must be **FAT32**. Make a folder called `mod` at the root of the drive and put these inside:
 
 - `services.jar` — from `$BASE/MOD/`
 - `Magisk.apk`
@@ -575,14 +614,23 @@ mount | grep -i vfat
 ```
 
 > [!TIP]
-> **It usually shows up as `usbotg-otg1`:** **Output** Expected output drwxrwx--- 5 media_rw media_rw 8192 ... usbotg-otg1 /dev/block/vold/public:8,1 on /mnt/media_rw/usbotg-otg1 type vfat (rw,...) You may also see an empty `usbotg` folder — that is a stale mount point, ignore it. The real one is whichever appears in the `mount` list.
+> **It usually shows up as `usbotg-otg1`:**
+
+**Output** — Expected output
+```text
+drwxrwx--- 5 media_rw media_rw 8192 ... usbotg-otg1
+/dev/block/vold/public:8,1 on /mnt/media_rw/usbotg-otg1 type vfat (rw,...)
+```
+
+> [!TIP]
+> You may also see an empty `usbotg` folder — that is an old mount point, ignore it. The real one is whichever appears in the `mount` list.
 
 > [!WARNING]
 > **Drive not showing up?** Make sure the green pin is **not** shorted to red. While green is shorted, the IHU USB port is in device mode and will not read a drive at all.
 
 ### 9.2 — Stage the files to internal storage
 
-Copy them inside first, because once you run `stop` the USB drive becomes unreachable.
+Copy them inside first, because once you run `stop` the USB drive can no longer be reached.
 
 **UART** — Stage the files
 ```bash
@@ -594,9 +642,9 @@ ls -lh /data/local/tmp/mod/
 ### 9.3 — Back up, swap the jar, clear the cache
 
 > [!WARNING]
-> **Every original file is `renamed`, never deleted.** If it bootloops, you go back in over UART, rename them back, reboot, done. Never use `rm` here.
+> **Every original file is `renamed`, never deleted.** If it bootloops, you go back in over UART, rename them back, and reboot — done. Never use `rm` here.
 
-Type these line by line rather than pasting the whole block — PuTTY often mangles long pastes.
+Type these one line at a time rather than pasting the whole block — PuTTY often garbles long pastes.
 
 **UART** — Back up the original jar
 ```bash
@@ -654,10 +702,21 @@ ls -l /system/framework/oat/arm64/ | grep -i services
 ```
 
 > [!WARNING]
-> **After `stop`, the IHU screen freezes and stops responding.** That is normal — the UI is shut down, but UART keeps working. Don't panic and don't cut power.
+> **After `stop`, the IHU screen freezes and stops responding.** That is normal — the UI is shut down, but UART keeps working. Do not panic and do not cut power.
 
 > [!TIP]
-> **You should see something like this:** **Output** Expected output -rw-r--r-- 1 root root 3.7M ... /system/framework/services.jar -rw-r--r-- 1 root root 503808 ... services.art.orig -rw-r--r-- 1 root root 25222088 ... services.odex.orig -rw-r--r-- 1 root root 10125680 ... services.vdex.orig The jar is now about 3.7MB (your exact size will vary slightly), and nothing ends in `.odex`, `.vdex` or `.art` any more — they all became `.orig`. That is exactly what you want.
+> **You should see something like this:**
+
+**Output** — Expected output
+```text
+-rw-r--r-- 1 root root 3.7M ... /system/framework/services.jar
+-rw-r--r-- 1 root root   503808 ... services.art.orig
+-rw-r--r-- 1 root root 25222088 ... services.odex.orig
+-rw-r--r-- 1 root root 10125680 ... services.vdex.orig
+```
+
+> [!TIP]
+> The jar is now about 3.7MB (your exact size will vary a little), and nothing ends in `.odex`, `.vdex` or `.art` any more — they all became `.orig`. That is exactly what you want.
 
 ## Step 10 — Reboot & Test
 
@@ -673,7 +732,7 @@ reboot
 
 ### 10.1 — The real test
 
-Once it has booted, try installing Magisk. This proves whether the patch worked.
+Once it has booted, try installing Magisk. This shows whether the patch worked.
 
 **UART** — Test pm install
 ```bash
@@ -685,21 +744,21 @@ pm install -r /data/local/tmp/mod/Magisk.apk
 > **If it says `Success`, the hard part is over.** The `pm install` block is gone. Everything left is just tidying up.
 
 > [!CAUTION]
-> **If you get an `INSTALL_FAILED_...` other than `ALREADY_EXISTS`,** or the IHU reboots the moment you install — see [Fix Fast](#fix-fast). **If `services.jar` went back to 183 bytes after the reboot,** dm-verity is still active. Go back to Step 5.
+> **If you get an `INSTALL_FAILED_...` other than `ALREADY_EXISTS`,** or the IHU reboots the moment you install — see [Fix Fast](#fix-fast).**If `services.jar` went back to 183 bytes after the reboot,** dm-verity is still active. Go back to Step 5.
 
 ## Step 11 — Stabilise Magisk
 
 `UART · PuTTY`
 
-Magisk is installed now but not yet stable. Two things to sort out: let the shell use MagiskSU, and remove the factory `su` that conflicts with it.
+Magisk is installed now but not yet stable. Two things to sort out: let the shell use MagiskSU, and remove the factory `su` that clashes with it.
 
 ### 11.1 — Open the Magisk app on the IHU screen
 
-Open the app list on the IHU screen and tap the Magisk icon. It may ask for extra setup and a reboot — just follow it. For now it will show **"Abnormal state"**; that is expected, and 11.3 fixes it. Tap OK and the IHU will reboot.
+Open the app list on the IHU screen and tap the Magisk icon. It may ask for extra setup and a reboot — just follow it. For now it shows **"Abnormal state"**; that is expected, and 11.3 fixes it. Tap OK and the IHU will reboot.
 
 ### 11.2 — Let the shell use MagiskSU
 
-When you type `su`, a superuser permission dialog pops up on the IHU screen. Tap **Grant** there before it closes. On most units it disappears far too quickly to catch, and if you miss it the request is denied. Setting the policy directly avoids the race entirely:
+When you type `su`, a superuser permission dialog pops up on the IHU screen. Tap **Grant** before it closes. On most units it vanishes far too fast to catch, and if you miss it the request is denied. Setting the policy directly avoids that race:
 
 **UART** — Grant permanent root to shell
 ```bash
@@ -709,12 +768,20 @@ magisk --sqlite "SELECT * FROM policies"
 ```
 
 > [!TIP]
-> **Output:** **Output** Expected output uid=2000|policy=2|until=0|logging=1|notification=1 `uid 2000` is the shell, `policy 2` means allow forever. Test it: exit, then type a plain `su` — you should get `#` straight away with no dialog.
+> **Output:**
+
+**Output** — Expected output
+```text
+uid=2000|policy=2|until=0|logging=1|notification=1
+```
+
+> [!TIP]
+> `uid 2000` is the shell, `policy 2` means allow forever. Test it: exit, then type a plain `su` — you should get `#` straight away with no dialog.
 
 ### 11.3 — Remove the conflicting factory su
 
 > [!CAUTION]
-> **Do not do this until a plain `su` is confirmed working.** `/system/xbin/su` is your last safety net. If MagiskSU is not stable yet and you rename this binary, you lose root completely.
+> **Do not do this until a plain `su` is confirmed working.**`/system/xbin/su` is your last safety net. If MagiskSU is not stable yet and you rename this binary, you lose root completely.
 
 Run these one line at a time, not as a single paste.
 
@@ -738,7 +805,7 @@ mv /system/xbin/su /system/xbin/su.bak
 ls -l /system/xbin/su*
 ```
 
-After renaming, **do not reboot yet**. Test in a fresh shell first:
+After renaming, **do not reboot yet**. Test it in a fresh shell first:
 
 **UART** — Leave the root shell
 ```bash
@@ -757,7 +824,7 @@ su
 
 `UART · PuTTY`
 
-This is what removes the need for a PC from here on. File Manager+ can install APKs straight off a USB drive on the IHU screen.
+This is what lets you drop the PC from here on. File Manager+ can install APKs straight off a USB drive on the IHU screen.
 
 **UART** — Install & grant permission
 ```bash
@@ -768,18 +835,24 @@ appops get com.alphainventor.filemanager REQUEST_INSTALL_PACKAGES
 ```
 
 > [!TIP]
-> **Output:** **Output** Expected output Success REQUEST_INSTALL_PACKAGES: allow
+> **Output:**
+
+**Output** — Expected output
+```text
+Success
+REQUEST_INSTALL_PACKAGES: allow
+```
 
 > [!WARNING]
-> **Do not use `pm grant ... android.permission.INSTALL_PACKAGES`.** That command fails with a SecurityException — File Manager+ does not declare that permission in its manifest. What it actually uses is `REQUEST_INSTALL_PACKAGES`, which the `appops` line above already handles.
+> **Do not use `pm grant ... android.permission.INSTALL_PACKAGES`.** That command fails with a SecurityException — File Manager+ does not declare that permission in its manifest. What it actually uses is `REQUEST_INSTALL_PACKAGES`, which the `appops` line above already covers.
 
-**Test it:** on the IHU screen, open File Manager+, browse to the USB drive, tap any APK and install. If it goes through without the IHU rebooting, **you are done**. Apps can be installed from the head unit itself now, no PC involved.
+**Test it:** on the IHU screen, open File Manager+, go to the USB drive, tap any APK and install. If it goes through without the IHU rebooting, **you are done**. You can install apps from the head unit itself now, no PC involved.
 
 ## Step 13 — SwipeBack
 
 `Optional`
 
-SwipeBack adds a floating button for the "back" gesture on the IHU. It runs through an Accessibility Service, so it has to be registered first.
+SwipeBack adds a floating button for the "back" gesture on the IHU. It runs as an Accessibility Service, so it has to be registered first.
 
 ### 13.1 — Install it
 
@@ -791,7 +864,7 @@ pm install -r /data/local/tmp/mod/SwipeBack.apk
 
 ### 13.2 — Confirm the service class name
 
-Do not guess this name — if it is wrong, the setting is accepted but the button never appears. Ask the device instead:
+Do not guess this name — if it is wrong, the setting is accepted but the button never shows. Ask the device instead:
 
 **UART** — Find the real class name
 ```bash
@@ -799,7 +872,16 @@ pm dump ace.jun.simpleback | grep -iE 'accessibility|Service' | head -20
 ```
 
 > [!TIP]
-> **Output:** **Output** Expected output android.accessibilityservice.AccessibilityService: ace.jun.simpleback/.service.AccService filter ... permission android.permission.BIND_ACCESSIBILITY_SERVICE So the full name is `ace.jun.simpleback/ace.jun.simpleback.service.AccService`.
+> **Output:**
+
+**Output** — Expected output
+```text
+android.accessibilityservice.AccessibilityService:
+  ace.jun.simpleback/.service.AccService filter ... permission android.permission.BIND_ACCESSIBILITY_SERVICE
+```
+
+> [!TIP]
+> So the full name is `ace.jun.simpleback/ace.jun.simpleback.service.AccService`.
 
 ### 13.3 — Turn it on
 
@@ -811,7 +893,7 @@ settings get secure enabled_accessibility_services
 ```
 
 > [!TIP]
-> The button appears on screen within a few seconds. **This setting survives reboots** — no Magisk boot script needed, no need to repeat it every time.
+> The button appears on screen within a few seconds. **This setting survives reboots** — no Magisk boot script needed, and no need to repeat it every time.
 
 ## Fix Fast
 
@@ -840,11 +922,11 @@ settings get secure enabled_accessibility_services
 
 `Findings & Evidence`
 
-This section is not a step — these are the investigation notes behind the guide above. Keep them as reference if you later work on another model, or want to understand why each choice was made.
+This section is not a step — these are the notes behind the guide above. Keep them for reference if you later work on another model, or want to know why each choice was made.
 
 ### 1 — Root comes from ECarX, not Magisk
 
-This is the single most important finding in the whole project, and it is what makes this method far shorter than people assume.
+This is the most important finding in the whole project, and it is what makes this method far shorter than people expect.
 
 Stock ECarX firmware leaves this binary behind:
 
@@ -853,9 +935,9 @@ Stock ECarX firmware leaves this binary behind:
 -rwsr-x--- 1 root shell 68400 2009-01-01 00:00 /system/xbin/su
 ```
 
-The `s` in `rws` is the setuid bit. Owner `root`, group `shell` — and the UART shell runs as uid 2000, which is in the `shell` group. So this binary was built to hand root to the shell. No conditions, no app, no dialog.
+The `s` in `rws` is the setuid bit. Owner `root`, group `shell` — and the UART shell runs as uid 2000, which is in the `shell` group. So this binary was built to give root to the shell. No conditions, no app, no dialog.
 
-The catch: once Magisk is flashed, `/sbin` comes first in PATH. A plain `su` hits MagiskSU, which denies you because there is no Magisk app installed yet to approve the request:
+The catch: once Magisk is flashed, `/sbin` comes first in PATH. A plain `su` hits MagiskSU, which denies you because there is no Magisk app installed yet to approve it:
 
 **Evidence** — which -a su — two binaries, two very different behaviours
 ```text
@@ -864,13 +946,13 @@ console:/ $ which -a su
 /system/xbin/su       ← ECarX factory — ACCEPTS, drops straight to #
 ```
 
-Plenty of people get stuck here, because the error reads `Permission denied` — which sounds like there is no root at all, when in fact root is right there and you simply knocked on the wrong door.
+Plenty of people get stuck here, because the error reads `Permission denied` — which sounds like there is no root at all, when really the root is right there and you just knocked on the wrong door.
 
 ### 2 — Magisk is not for root; it is for write access
 
-This was verified directly on the unit: even before boot.bin was patched, `/system/xbin/su` already gave root on the UART shell. The only thing that failed at that point was `remount`, because dm-verity was still active.
+This was checked directly on the unit: even before boot.bin was patched, `/system/xbin/su` already gave root on the UART shell. The only thing that failed at that point was `remount`, because dm-verity was still active.
 
-So the real job of the Magisk patch in this method is to **disable dm-verity / AVB** so that `/system` becomes writable. That is why `Preserve AVB 2.0 / dm-verity` must stay **unticked**. Leave it ticked and you still get root, but `mount -o rw,remount` fails and anything you write reverts on the next boot.
+So the real job of the Magisk patch here is to **turn off dm-verity / AVB** so that `/system` becomes writable. That is why `Preserve AVB 2.0 / dm-verity` must stay **unticked**. Leave it ticked and you still get root, but `mount -o rw,remount` fails and anything you write is undone on the next boot.
 
 ### 3 — ecarx.policy.jar does not need to be deployed
 
@@ -883,7 +965,7 @@ The modified version was compared against the original, pulled straight from `/s
 | Total classes | 3912 | 3912 |
 | Total types | 6290 | 6290 |
 | Classes present in only one | 0 | 0 |
-| Classes with different method/field counts | **0** |  |
+| Classes with different method/field counts | **0** |
 | Total strings | 80,536 | 80,531 |
 
 The five strings missing from the modified copy:
@@ -900,9 +982,9 @@ set2
 The last one is a D8 compiler marker — build metadata. The other four are local variable names from debug info. The modified copy adds **no new strings at all**.
 
 > [!TIP]
-> **Conclusion:** the modified `ecarx.policy.jar` is not a patched build — it is simply a **deodexed copy** of the original, and the deodex process dropped a little debug info. No classes added, no methods removed, no string constants changed.
+> **Conclusion:** the modified `ecarx.policy.jar` is not a patched build — it is just a **deodexed copy** of the original, and the deodex process dropped a bit of debug info. No classes added, no methods removed, no string constants changed.
 
-**Limits of this check:** the actual bytecode was not compared, because CompactDex stores code items in a compressed layout that differs from standard DEX. In theory a single opcode could be changed without affecting the structure. To rule that out you would have to convert the cdex to dex first with `vdexExtractor`.
+**Limits of this check:** the actual bytecode was not compared, because CompactDex stores code items in a compressed layout that is different from standard DEX. In theory a single opcode could be changed without changing the structure. To rule that out you would have to convert the cdex to dex first with `vdexExtractor`.
 
 ### 4 — So why was that file included at all?
 
@@ -913,18 +995,18 @@ The answer sits in the old guide itself, in one line:
 sudo rm -f "$OAT/ecarx.policy.odex" "$OAT/ecarx.policy.vdex"
 ```
 
-It deletes the `ecarx.policy` cache too. On Android 9, all boot classpath jars are compiled together as one set, and their odex/vdex files carry checksums that reference each other. Once `services.jar` is replaced and its cache removed, that set no longer matches — so the safe move for anyone rebuilding a full image is to **deodex every jar in the set**, giving each one its full code inside the jar.
+It deletes the `ecarx.policy` cache too. On Android 9, all boot classpath jars are compiled together as one set, and their odex/vdex files carry checksums that point at each other. Once `services.jar` is replaced and its cache removed, that set no longer matches — so the safe move for anyone rebuilding a full image is to **deodex every jar in the set**, giving each one its full code inside the jar.
 
-Delete the cache without supplying a jar that contains the code, and `ecarx.policy` disappears entirely and the IHU bootloops. So that file exists as a **replacement**, not as a patch.
+Delete the cache without giving it a jar that contains the code, and `ecarx.policy` disappears completely and the IHU bootloops. So that file is a **replacement**, not a patch.
 
 > [!TIP]
-> **This method never runs into that problem** — we only rename the `services.*` cache. `ecarx.policy.odex` and `.vdex` are left untouched, so it keeps loading from its original cache as usual. We touch only what needs touching instead of clearing everything.
+> **This method never hits that problem** — we only rename the `services.*` cache. `ecarx.policy.odex` and `.vdex` are left alone, so it keeps loading from its original cache as usual. We touch only what needs touching instead of clearing everything.
 
 ### 5 — Rename, never delete
 
 Older guides use `rm -f` to clear the cache. The 4PDA forum (post #305) uses `mv`. We follow the forum.
 
-The difference matters when things go wrong. Rename it and if the IHU bootloops, you get in over UART, rename them back, reboot — a minute's work. Delete it and the only way back is reflashing `system.bin`, which is an hour.
+The difference matters when things go wrong. Rename it, and if the IHU bootloops you get in over UART, rename them back, reboot — a minute's work. Delete it, and the only way back is reflashing `system.bin`, which takes an hour.
 
 ### 6 — The green JST pin switches the USB port into device mode
 
@@ -936,13 +1018,13 @@ The JST port is not only for BROM. The green pin (USB) is independent of the blu
 | Green shorted to red (3.3V) | IHU USB port acts as a **device** — the PC sees it as an Android ADB interface |
 | Blue shorted to white (GND) | Recovery / BROM |
 
-An earlier note in this project claimed "USB port is host-mode only, USB ADB will not work on this unit". **That is not accurate.** With green shorted to red, `adb devices` does see the IHU. It just reports `unauthorized` — a separate problem.
+An earlier note in this project said "USB port is host-mode only, USB ADB will not work on this unit". **That is not correct.** With green shorted to red, `adb devices` does see the IHU. It just reports `unauthorized` — a separate problem.
 
-Side effect worth remembering: while green is shorted, that USB port **cannot read a USB drive**. That is why Step 9 insists on removing the short first.
+One side effect to remember: while green is shorted, that USB port **cannot read a USB drive**. That is why Step 9 tells you to remove the short first.
 
 ### 7 — ADB is not needed at all
 
-A lot of time went into trying to clear `unauthorized`. Every route was closed:
+A lot of time went into trying to clear `unauthorized`. Every route was a dead end:
 
 | Attempt | Result |
 |---|---|
@@ -953,7 +1035,7 @@ A lot of time went into trying to clear `unauthorized`. Every route was closed:
 | Use WiFi ADB instead of USB | Identical result — `ro.adb.secure=1`, and auth is key-based, not transport-based |
 
 > [!TIP]
-> **None of it turned out to matter.** This method completes entirely over UART. ADB is not required at any step. If you see `unauthorized`, ignore it and carry on.
+> **None of it turned out to matter.** This method finishes entirely over UART. ADB is not needed at any step. If you see `unauthorized`, ignore it and carry on.
 
 ### 8 — Corrections to older notes
 
@@ -970,16 +1052,16 @@ Several claims in older guides were tested and turned out to be wrong:
 
 **Shared** across all E02 Android 9 units: `/system/xbin/su`, the role of the Magisk patch, the cache rename order, the MagiskSU policy, and the File Manager steps.
 
-**Model-specific:** `lk.bin` and `boot.bin` must come from your own unit's firmware. The orange state offset differs too — X50 RC V144 sits at `0x0003B392`, S70 V333 and X90 V735 at `0x0003C0FE`. The Step 4 script finds it automatically, so this is not a problem as long as the `lk.bin` is correct.
+**Model-specific:** `lk.bin` and `boot.bin` must come from your own unit's firmware. The orange state offset is different too — X50 RC V144 is at `0x0003B392`, S70 V333 and X90 V735 at `0x0003C0FE`. The Step 4 script finds it for you, so this is not a problem as long as the `lk.bin` is correct.
 
 > [!WARNING]
-> **One interesting data point:** the `services.jar` used in testing came from an **S70** build, and it ran fine on an **X50 RC V144**. So the jar appears to carry across models within the E02 Android 9 family. But that is a single case — do not assume it holds for every combination until it is tested.
+> **One interesting data point:** the `services.jar` used in testing came from an **S70** build, and it ran fine on an **X50 RC V144**. So the jar seems to carry across models within the E02 Android 9 family. But that is one case — do not assume it holds for every combination until it is tested.
 
 ### 10 — ECarX security watchdog
 
-Some APKs are flagged by the ECarX security policy. Try to install one through `pm install` or File Manager and the IHU reboots instantly — the install never completes. Termux is a confirmed example.
+Some APKs are flagged by the ECarX security policy. Try to install one through `pm install` or File Manager and the IHU reboots at once — the install never finishes. Termux is a confirmed example.
 
-For those APKs the only route is injecting them into `system.bin` before flashing. Ordinary apps (Brave, RetroArch, microG, FakeStore, ViPER4Android) install without trouble.
+For those APKs the only way in is injecting them into `system.bin` before flashing. Ordinary apps (Brave, RetroArch, microG, FakeStore, ViPER4Android) install without trouble.
 
 ### 11 — Sources
 
@@ -989,4 +1071,4 @@ This method builds on other people's work:
 - **4PDA post #305** (topic 1068514) — the full sequence for swapping `services.jar` over UART on a Geely Atlas-PRO/Tugella E01. Note: E01 runs Android 5.1 and gives root on UART without `su` at all, so that sequence cannot be copied to E02 as-is
 
 > [!TIP]
-> **A note on `services.jar`:** it CAN be built from scratch — pull the stock `services.vdex` off your own unit and rebuild it with the [Build services.jar guide](./build-services-jar.md). The patch is three constant-return signature stubs plus one branch redirect in `installPackageLI` (the aco whitelist), assembled as `dex 039`. The 4PDA forum only noted that the file is patched to disable the system-app signature check; this project reverse-engineered the exact changes.
+> **A note on `services.jar`:** you CAN build it from scratch — pull the stock `services.vdex` off your own unit and rebuild it with the [Build services.jar guide](./build-services-jar.md). The patch is three constant-return signature stubs plus one branch redirect in `installPackageLI` (the aco whitelist), assembled as `dex 039`. The 4PDA forum only noted that the file is patched to turn off the system-app signature check; this project worked out the exact changes.
