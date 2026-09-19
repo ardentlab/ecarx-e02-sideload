@@ -141,6 +141,8 @@ If you worked out something this repository gets wrong, say so directly. Being c
 
 Special thanks to [@jamesjoe200](https://github.com/jamesjoe200) for supporting the [Sideload — Live Deploy over UART](docs/sideload.md) guide — especially the factory su (`/system/xbin/su`) and `/system` remount rw steps, and for pointing us to the 4PDA forum threads referenced there.
 
+Heartfelt thanks to [@Deadbyte92](https://github.com/Deadbyte92), a steadfast collaborator throughout the entire journey — a true partner in the R&D who brought an invaluable non-developer perspective that kept these guides grounded and approachable, and served as a dedicated beta tester, validating each step on real hardware before it reached everyone else.
+
 ---
 
 ## Legal
