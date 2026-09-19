@@ -139,7 +139,7 @@ If you worked out something this repository gets wrong, say so directly. Being c
 
 ## Credits
 
-Special thanks to [@jamesjoe200](https://github.com/jamesjoe200) for also providing support throughout this research.
+Special thanks to [@jamesjoe200](https://github.com/jamesjoe200) for supporting the [Sideload — Live Deploy over UART](docs/sideload.md) guide — especially the factory su (`/system/xbin/su`) and `/system` remount rw steps, and for pointing us to the 4PDA forum threads referenced there.
 
 ---
 
