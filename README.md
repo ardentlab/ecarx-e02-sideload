@@ -137,6 +137,12 @@ If you worked out something this repository gets wrong, say so directly. Being c
 
 ---
 
+## Credits
+
+Special thanks to [@jamesjoe200](https://github.com/jamesjoe200) for also providing support throughout this research.
+
+---
+
 ## Legal
 
 This is independent interoperability research, on hardware the researchers own. It is not affiliated with, authorised by, or endorsed by any vehicle manufacturer or infotainment supplier. All trademarks belong to their respective owners.
