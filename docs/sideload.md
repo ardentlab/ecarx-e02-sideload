@@ -72,20 +72,16 @@ Phase 4  Finish up       → Magisk, File Manager, SwipeBack
 | Android phone | Android 10 or newer, to patch boot.bin with the Magisk app. |
 | Windows PC + Ubuntu WSL | WSL is used to run the lk.bin patch script. |
 
-![CH340G USB-to-TTL adapter seen from above, pin header labelled 5V, 3V3, TXD, RXD, GND](../images/ch340g-adapter-front.jpg)
-
+![CH340G USB-to-TTL adapter seen from above, pin header labelled 5V, 3V3, TXD, RXD, GND](../images/ch340g-adapter-front.jpg)\
 *CH340G adapter. The pin header is labelled `5V`, `3V3`, `TXD`, `RXD`, `GND`.*
 
-![The same CH340G adapter at an angle, showing the yellow voltage-select jumper](../images/ch340g-adapter-angled.jpg)
-
+![The same CH340G adapter at an angle, showing the yellow voltage-select jumper](../images/ch340g-adapter-angled.jpg)\
 *The yellow jumper selects the voltage. It must sit on **3V3**, never 5V.*
 
-![Micro JST GH 6-pin cable with the white connector on the right and bare tinned wire ends](../images/jst-6pin-cable-connector.jpg)
-
+![Micro JST GH 6-pin cable with the white connector on the right and bare tinned wire ends](../images/jst-6pin-cable-connector.jpg)\
 *Micro JST GH 6-pin cable, single connector. The connector plugs into the IHU; the bare ends go to the adapter.*
 
-![A plain USB-A flash drive photographed from above](../images/usb-flash-drive-top.jpg)
-
+![A plain USB-A flash drive photographed from above](../images/usb-flash-drive-top.jpg)\
 *Any small USB-A drive works, as long as it is formatted **FAT32**. It carries the files onto the IHU in [Step 9](#step-9--deploy-servicesjar).*
 
 > [!CAUTION]
@@ -350,12 +346,10 @@ This is the only time you use MTKClient. Everything after this happens over UART
 
 ### 6.1 — Enter BROM mode
 
-![Side panel of the ECarX E02 chassis with the Micro JST GH port low down, next to a red TAP marking](../images/jst-port-location.jpg)
-
+![Side panel of the ECarX E02 chassis with the Micro JST GH port low down, next to a red TAP marking](../images/jst-port-location.jpg)\
 *Where to look: the port sits low on the side panel of the chassis. The red **TAP** marking here is hand-written, your unit will not have it.*
 
-![Close-up of the Micro JST GH port showing six gold pins inside a white plastic housing](../images/jst-port-closeup.jpg)
-
+![Close-up of the Micro JST GH port showing six gold pins inside a white plastic housing](../images/jst-port-closeup.jpg)\
 *The same port close up — six pins in a white housing. Count them against the table below before you push the connector in.*
 
 | Pin | Colour | Function | When used |
@@ -367,28 +361,35 @@ This is the only time you use MTKClient. Everything after this happens over UART
 | 5 | Yellow | UART TX | Always |
 | 6 | Red | 3.3V | Used to short with green |
 
-![Micro JST GH 6-pin cable with the wires fanned out, showing white, blue, yellow, green, black and red](../images/jst-6pin-cable-wires.jpg)
-
+![Micro JST GH 6-pin cable with the wires fanned out, showing white, blue, yellow, green, black and red](../images/jst-6pin-cable-wires.jpg)\
 *The six wire colours, matching the table above: white, blue, green, black, yellow, red.*
 
 On the JST GH cable, short **white (GND) ↔ blue (Recovery)** and **green (USB) ↔ red (3.3V)**.
 
 - **Disconnect IHU power.** Unplug **Socket Block A — Power**, the black connector sitting lowest in the ISO stack. Pulling the socket is what guarantees a true cold boot; standby is not enough.
-  ![The ISO connector block on the back of the IHU with all sockets plugged in](../images/power-socket-before.jpg)
+
+  ![The ISO connector block on the back of the IHU with all sockets plugged in](../images/power-socket-before.jpg)\
   *The ISO connectors as they normally sit, everything still plugged in.*
-  ![The same ISO connector block with a red box drawn around the black power socket at the bottom of the stack](../images/power-socket-highlighted.jpg)
+
+  ![The same ISO connector block with a red box drawn around the black power socket at the bottom of the stack](../images/power-socket-highlighted.jpg)\
   *Unplug the one in the red box: **Socket Block A — Power**, the black connector at the very bottom of the ISO stack.*
+
 - **Make both shorts on the JST jumper.** White↔blue, and green↔red. Join them properly — twisted and tinned, or soldered. A jumper you have to pinch by hand will let go at the worst possible moment, and a short that opens mid-flash is exactly how a unit gets bricked.
-  ![Micro JST GH cable with only four wires fitted, white joined to blue at one pair of ends and green joined to red at the other, bare tinned copper still showing](../images/jst-jumper-shorted.jpg)
+
+  ![Micro JST GH cable with only four wires fitted, white joined to blue at one pair of ends and green joined to red at the other, bare tinned copper still showing](../images/jst-jumper-shorted.jpg)\
   *The two joins made: white to blue, green to red. Yellow and black are left off the connector entirely — they are the UART pair, unused during flashing.*
-  ![The same jumper with each shorted pair sealed inside its own piece of black heat shrink tubing, no copper visible](../images/jst-jumper-shorted-insulated.jpg)
+
+  ![The same jumper with each shorted pair sealed inside its own piece of black heat shrink tubing, no copper visible](../images/jst-jumper-shorted-insulated.jpg)\
   *The same jumper finished. Each join sits inside **its own** piece of heat shrink, with no copper showing anywhere. This is what it should look like before it goes near a powered unit — PVC tape works if you have no heat gun.*
+
 - **Plug the JST jumper into the IHU port** — the one shown at the top of this step.
 - **Start MTKClient** (`gui.bat` → Run as administrator) and wait until it says "Waiting for connection". The tool must be listening before the unit boots, not after.
 - **Plug the POWER socket back in.**
 - **Immediately plug the USB male-to-male cable**: IHU USB port → PC USB 2.0 port.
-  ![A laptop connected by a USB A-to-A cable to the car's centre-console USB socket, with the gear selector in P](../images/usb-a-to-a-laptop-to-ihu.jpg)
+
+  ![A laptop connected by a USB A-to-A cable to the car's centre-console USB socket, with the gear selector in P](../images/usb-a-to-a-laptop-to-ihu.jpg)\
   *The A-to-A cable running from the laptop to the car's centre-console USB socket. This is the **only** socket wired to the IHU. Every other USB port in the car is charge-only and will never enumerate, whatever cable you use.*
+
 - MTKClient detects it and connects on its own.
 
 > [!CAUTION]
@@ -509,16 +510,13 @@ Port location and the full six-pin table are in [Step 6.1](#step-6--backup-unloc
 - Click **Open**, then plug the IHU POWER socket back in — the boot log starts scrolling
 - Wait for boot to finish, then press **Enter** once to get a prompt
 
-![CH340G adapter from above with three jumper wires attached to the pin header](../images/ch340g-jumper-wires-top.jpg)
-
+![CH340G adapter from above with three jumper wires attached to the pin header](../images/ch340g-jumper-wires-top.jpg)\
 *Only three wires are used — yellow, black and white — on `TXD`, `RXD` and `GND`.*
 
-![The same three jumper wires at an angle, with the pin labels readable](../images/ch340g-jumper-wires-angled.jpg)
-
+![The same three jumper wires at an angle, with the pin labels readable](../images/ch340g-jumper-wires-angled.jpg)\
 *Angled view, so you can check each wire against its pin label.*
 
-![CH340G adapter joined by jumper wires to the Micro JST GH 6-pin cable, ready to plug into the IHU](../images/ch340g-jst-cable-wired.jpg)
-
+![CH340G adapter joined by jumper wires to the Micro JST GH 6-pin cable, ready to plug into the IHU](../images/ch340g-jst-cable-wired.jpg)\
 *The finished lead: adapter, three jumpers, and the JST GH cable that plugs into the IHU.*
 
 > [!TIP]
