@@ -43,3 +43,9 @@ scratch/
 *_dump/
 ORI/
 MOD/
+
+# ─── Exception: shared preloaders ─────────────────────────────────────
+# Preloaders published on purpose so users can pass --preloader to
+# MTKClient. Only files placed in preloaders/ are allowed through.
+!preloaders/
+!preloaders/*.bin
