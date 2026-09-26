@@ -1,6 +1,6 @@
 # Build services.jar for ECarX E02 Android 9
 
-Take the stock `services.vdex` off the head unit and turn it into a `services.jar` that allows sideloading — all on your own PC. Pull the file over UART with the factory `su`, convert CompactDex to standard DEX with a small Python tool, change four signature checks, then rebuild.
+Take the stock `services.vdex` off the head unit and turn it into a `services.jar` that allows sideloading — all on your own PC. Pull the file over UART with the factory `su`, convert CompactDex to standard DEX with a small Python tool, change six checks, then rebuild.
 
 **IHU:** ECarX E02 · **Android:** 9 · **Pull:** UART + factory su · **Build:** Ubuntu WSL · **Output:** services.jar
 
@@ -16,7 +16,7 @@ Take the stock `services.vdex` off the head unit and turn it into a `services.ja
 - [Step 5 — vdex → cdex](#step-5--vdex--cdex)
 - [Step 6 — cdex → DEX](#step-6--cdex--standard-dex)
 - [Step 7 — DEX → smali](#step-7--dex--smali)
-- [Step 8 — Patch 4 Changes](#step-8--patch-the-4-changes)
+- [Step 8 — Patch 6 Changes](#step-8--patch-the-6-changes)
 - [Step 9 — smali → jar](#step-9--smali--jar)
 - [Step 10 — Verify](#step-10--verify-before-deploy)
 - [Fix Fast](#fix-fast)
@@ -31,9 +31,9 @@ Take the stock `services.vdex` off the head unit and turn it into a `services.ja
 This guide builds the one file that lets you sideload APKs on an ECarX E02 head unit — `services.jar` — **from the unit's own firmware**.
 
 > [!TIP]
-> **What makes sideloading work:** Android's installer blocks any APK whose signature does not match the system. Four small changes inside `services.jar` control that check. **Make those four** and the installer stops rejecting APKs signed by someone else. Once you know which four, you can build the file yourself for any firmware version.
+> **What makes sideloading work:** Android's installer blocks any APK whose signature does not match the system. Six small changes inside `services.jar` control that check — four for ordinary APKs, and two more for apps that request the system UID (`sharedUserId="android.uid.system"`). **Make those six** and the installer stops rejecting APKs signed by someone else. Once you know which, you can build the file yourself for any firmware version.
 
-**The four changes (all in `PackageManagerService`):**
+**The six changes (in `PackageManagerService` / `PackageManagerServiceUtils`):**
 
 | Method | Original | Patched to |
 |---|---|---|
@@ -41,8 +41,10 @@ This guide builds the one file that lets you sideload APKs on an ECarX E02 head 
 | `PackageManagerService.compareSignaturesWithAco([Signature;)I` | ECarX signature check | `return 0` |
 | `PackageManagerService.reconcileApps(Ljava/lang/String;)V` | reconcile check on install | `return-void` (no-op) |
 | `PackageManagerService.installPackageLI` — aco whitelist branch | rejects any package not on the aco whitelist | redirect all branches past the reject (see Step 8.4) |
+| `PackageManagerServiceUtils.verifySignatures` — shared-user guard | rejects a system-UID app whose signature is not whitelisted | redirect past the reject (see Step 8.5) |
+| `PackageManagerService.assertPackageIsValid` — scan-time guard | deletes + rejects on signature mismatch at scan | redirect past the reject (see Step 8.5) |
 
-In Android, `compareSignatures` returning `0` means "signatures match". Make it always return `0` and the installer stops rejecting APKs that are unsigned or signed by someone else. The other two are backups, so nothing else blocks the install again.
+In Android, `compareSignatures` returning `0` means "signatures match". Make it always return `0` and the installer stops rejecting APKs that are unsigned or signed by someone else. The other two stubs are backups, so nothing else blocks the install again.
 
 **Why this is harder than it sounds:**
 
@@ -56,7 +58,7 @@ IHU  services.vdex   ─(UART + factory su, copy to USB)→   your PC
      services.vdex   ─(vdexExtractor)→   services.cdex   (CompactDex)
      services.cdex   ─(cdex2dex.py)→     services.dex    (standard DEX)
      services.dex    ─(baksmali)→        smali/           (editable)
-     patch 4 changes ─(smali)→           classes.dex
+     patch 6 changes ─(smali)→           classes.dex
      classes.dex     ─(zip)→             services.jar     ← done
 ```
 
@@ -119,7 +121,7 @@ The build packages themselves — `smali`, `baksmali`, `build-essential` and the
 
 | File | Size | Where it comes from |
 |---|---|---|
-| `services.vdex` | ~20MB | Pulled off **your own** IHU over UART in [Step 3](#step-3--pull-servicesvdex-off-the-ihu). It has to match the firmware on the unit you are patching. |
+| `services.vdex` | ~10MB | Pulled off **your own** IHU over UART in [Step 3](#step-3--pull-servicesvdex-off-the-ihu). It has to match the firmware on the unit you are patching. |
 | `vdexExtractor` | — | Cloned from GitHub (`anestisb/vdexExtractor`) and built in [Step 4.3](#step-4--wsl-toolchain). |
 | `cdex2dex.py` | ~430 lines | Written out by the one-liner in [Step 4.4](#step-4--wsl-toolchain). Nothing to download. |
 | `smali` / `baksmali` | — | Ubuntu `apt` package, installed in [Step 4.1](#step-4--wsl-toolchain). |
@@ -450,24 +452,26 @@ ls smali_out/com/android/server/pm/PackageManagerServiceUtils.smali && echo "BAK
 > [!TIP]
 > No errors, and the `.smali` file shown, means the conversion worked. You now have the whole framework as smali under `smali_out/`.
 
-## Step 8 — Patch the 4 Changes
+## Step 8 — Patch the 6 Changes
 
 `WSL Ubuntu`
 
-Three of the changes swap a method body for a stub. The fourth rewrites a branch inside `installPackageLI`. In a 90,000-line file it is easy to make a mistake by hand, so use small patch scripts that find each spot and edit it for you.
+The first three changes swap a method body for a stub, the fourth rewrites a branch inside `installPackageLI`, and the last two (8.5) clear the system-UID path so an `android.uid.system` app can install and boot. In a 90,000-line file it is easy to make a mistake by hand, so use small patch scripts that find each spot and edit it for you.
 
-### 8.1 — What each stub looks like
+### 8.1 — What each change looks like
 
-| Method | Stub body (smali) | Effect |
+| Method | Change (smali) | Effect |
 |---|---|---|
 | `compareSignatures` | `const/4 v0, 0x0` / `return v0` | always SIGNATURE_MATCH |
 | `compareSignaturesWithAco` | `const/4 v0, 0x0` / `return v0` | always match |
 | `reconcileApps` | `return-void` | no-op |
 | `installPackageLI` aco branch | branches redirected to the safe label | skip the "aco version" reject (Step 8.4) |
+| `verifySignatures` shared-user guard | the `if-eqz` after `isSysUidAllowed` → `goto` the safe label | skip the shared-user reject (Step 8.5) |
+| `assertPackageIsValid` scan guard | the `if-nez v0` after the `"signatures match ="` log → `goto` | skip the scan-time reject (Step 8.5) |
 
 `.locals 1` gives one local register (v0) on top of the parameters. `.locals 0` gives none. smali works out the full register count for you.
 
-### 8.2 — Write the patch script
+### 8.2 — Changes 1–3: stub the signature checks (patch_smali.py)
 
 **WSL** — Write patch_smali.py
 ```bash
@@ -478,7 +482,7 @@ cat patch_smali.py
 
 The script finds each method by its exact descriptor, deletes everything from `.method` to `.end method`, and writes the stub in its place.
 
-### 8.3 — Run it and verify
+### 8.3 — Run patch_smali.py and verify changes 1–3
 
 **WSL** — Patch & show result
 ```bash
@@ -511,7 +515,7 @@ PATCHED: reconcileApps(Ljava/lang/String;)V
 > [!CAUTION]
 > **If any line says NOT FOUND:** the method descriptor is different in your firmware version. Run `grep -n "compareSignatures" smali_out/com/android/server/pm/*.smali` and change the descriptor in the script to match.
 
-### 8.4 — The fourth change: bypass the aco whitelist in installPackageLI
+### 8.4 — Change 4: bypass the aco whitelist in installPackageLI
 
 The three stubs above are not enough on their own. `installPackageLI` has a second, separate check: a whitelist of package names, and anything not on it is rejected with `"signatures do not match the aco version; ignoring!"`. Sideloaded apps (Magisk and the rest) are never on that list, so this check has to be dealt with too. This script sends all three branch paths of that check to the safe label, so the reject block can never run.
 
@@ -561,6 +565,57 @@ python3 patch_aco.py
 > [!WARNING]
 > Label names (`:cond_XXXX`) change with the firmware — the script finds them for you, so it works on any ECarX E02 Android 9 build. If it prints `guard redirects: 0`, stop and check again before you deploy.
 
+### 8.5 — Changes 5 & 6: the system-UID path
+
+Changes 1–4 unlock ordinary sideloaded apps. An app that declares `sharedUserId="android.uid.system"` (for example a replacement `com.android.settings`) takes a **separate** code path the four never touch, and still fails with `INSTALL_FAILED_SHARED_USER_INCOMPATIBLE` — `"has no signatures that match those in shared user android.uid.system"`.
+
+Two more guards protect that path, both the same shape as the aco fix — turn an `if-` into an unconditional `goto` past the reject:
+
+| File · method | Change | Effect |
+|---|---|---|
+| `PackageManagerServiceUtils` · `verifySignatures` | guard after `isSysUidAllowed`: `if-eqz vX, :cond_throw` → `goto :success` | skip the shared-user reject (-0x8) |
+| `PackageManagerService` · `assertPackageIsValid` | guard after the `"signatures match = "` log: `if-nez v0, :cond_ok` → `goto :cond_ok` | skip the scan-time signature delete+throw |
+
+**WSL** — Write & run patch_sysuid.py
+```bash
+cd ~/svc
+cat > patch_sysuid.py <<'PY'
+# Patch 5 - verifySignatures: bypass the shared-user signature reject
+p="smali_out/com/android/server/pm/PackageManagerServiceUtils.smali"
+L=open(p).readlines()
+err=next(i for i,l in enumerate(L) if 'has no signatures that match those in shared user' in l)
+i=err
+while 'isSysUidAllowed' not in L[i]: i-=1
+g=i+1
+while not L[g].strip().startswith('if-'): g+=1
+h=g+1
+while L[h].strip()=='': h+=1
+assert L[h].strip().startswith('goto'), 'unexpected: '+L[h].strip()
+safe=L[h].strip().split(':')[-1]
+L[g]='    goto :'+safe+'\n'
+open(p,'w').writelines(L)
+print("patch5 verifySignatures -> goto :%s" % safe)
+
+# Patch 6 - assertPackageIsValid: bypass the scan-time signature delete+throw
+p2="smali_out/com/android/server/pm/PackageManagerService.smali"
+M=open(p2).readlines()
+s=next(i for i,l in enumerate(M) if ' signatures match = ' in l)
+g2=s
+while not (M[g2].strip().startswith('if-nez') and ':cond_' in M[g2]): g2+=1
+safe2=M[g2].strip().split(':')[-1]
+M[g2]='    goto :'+safe2+'\n'
+open(p2,'w').writelines(M)
+print("patch6 assertPackageIsValid -> goto :%s" % safe2)
+PY
+python3 patch_sysuid.py
+```
+
+> [!TIP]
+> **Expected:** two lines — `patch5 verifySignatures -> goto :goto_XXX` and `patch6 assertPackageIsValid -> goto :cond_XXX`. Label names vary by firmware; the script finds them.
+
+> [!WARNING]
+> **System-UID apps are not `pm install`-able.** An app with `coreApp="true"` + system UID must live in `/system/priv-app`, not `/data`. Installed to `/data` it bootloops on the next reboot (coreApps are scanned before `/data` is ready). These two patches remove only the *signature* barrier — placement is a separate matter.
+
 ## Step 9 — smali → jar
 
 `WSL Ubuntu`
@@ -594,7 +649,7 @@ unzip -l services.jar
 
 `WSL Ubuntu`
 
-A bad `services.jar` can bootloop the IHU, so check the three stubs are in the final DEX before you deploy.
+A bad `services.jar` can bootloop the IHU, so check all six changes are in the final DEX before you deploy.
 
 **WSL** — Re-disassemble the final DEX and check the stubs
 ```bash
@@ -620,6 +675,18 @@ grep -n "the aco version; ignoring" verify/com/android/server/pm/PackageManagerS
 
 > [!TIP]
 > The first command must show `6465 780a 3033 3900` = `dex 039`. If it ends in `3033 3500` (035), run Step 9 again with `-a 28`. The aco string is still in the code, but after Step 8.4 nothing branches into it.
+
+**WSL** — Confirm changes 5 & 6 (system-UID path)
+```bash
+cd ~/svc
+echo "--- change 5: verifySignatures - after isSysUidAllowed must be goto, not if-eqz ---"
+grep -A4 "isSysUidAllowed" verify/com/android/server/pm/PackageManagerServiceUtils.smali | grep -E "goto|if-"
+echo "--- change 6: assertPackageIsValid - after 'signatures match =' must be goto, not if-nez ---"
+grep -A8 "signatures match = " verify/com/android/server/pm/PackageManagerService.smali | grep -E "goto|if-nez" | head -1
+```
+
+> [!TIP]
+> Change 5 must show `goto :goto_XXX` (an `if-eqz` here means the patch did not apply). Change 6 must show `goto :cond_XXX` (not `if-nez`). Both `goto` = the jar is complete, all 6 changes in.
 
 ### 10.1 — Copy the finished jar to your Desktop
 
@@ -654,6 +721,7 @@ echo "done — services.jar is on your Desktop"
 | IHU bootloops after deploying the jar | Wrong build, or cache not cleared | Restore over UART: rename the `.orig` framework files back and reboot. Then re-verify (Step 10) before trying again. |
 | Final DEX magic is `dex 035`, not 039 | You ran `smali a` without `-a 28` | This IS the problem — 035 loads on Android 9 but the patches don't take effect. Re-run Step 9 as `smali a -a 28 smali_out -o classes.dex`, repackage, redeploy. |
 | Install still fails `"...aco version; ignoring!"` after deploy | Only the 3 stubs were applied — the installPackageLI whitelist check still rejects the app | Apply Step 8.4 (`patch_aco.py`) as well, rebuild with `-a 28`, redeploy. |
+| Install fails `INSTALL_FAILED_SHARED_USER_INCOMPATIBLE` — `"no signatures that match those in shared user"` | Only changes 1–4 applied; the system-UID guards (`verifySignatures` / `assertPackageIsValid`) still reject the app | Apply Step 8.5 (`patch_sysuid.py`) as well, rebuild with `-a 28`, redeploy. Only affects apps that request `sharedUserId="android.uid.system"`. |
 
 ## Project Notes
 
@@ -719,11 +787,17 @@ Even with all four patches correct, the jar still failed until the assemble step
 
 Diagnosis was confused by three dead ends worth remembering. First, deployment was proven sound by swapping a known-good reference jar onto the same unit with the same live-swap method — it installed apps immediately, so the head unit, the cache-clear, and the swap procedure were all fine and the fault had to be in the built jar. Second, the deployed jar was confirmed with `md5sum` on-device to rule out "wrong or stale file". Third, `boot-services.ecarx.oat/.vdex` in `/data/dalvik-cache` look like a compiled copy of services, but they are only symlinks to `/system/framework/arm64/` and are not what runs `PackageManagerService` for installs — chasing them was a red herring. With deployment and unit ruled out, the difference narrowed to the jar's own bytes: the missing fourth patch and the wrong DEX version.
 
-### 10 — Sources
+### 10 — The 5th & 6th changes: the system-UID path
+
+The four changes above unlock ordinary APKs, but an app that asks to join the system UID (`sharedUserId="android.uid.system"` — a replacement `com.android.settings`, say) is checked on a different path and still rejected with `"has no signatures that match those in shared user android.uid.system"`. Diffing a working reference jar method-by-method against the four-patch build showed exactly two more methods differed: `PackageManagerServiceUtils.verifySignatures` and `PackageManagerService.assertPackageIsValid`. Both guard a vendor signature gate (`ECarxSysPermissionPolicy.isSysUidAllowed`), and the reference jar neutralises each the same way as the aco change — the `if-` guard becomes an unconditional `goto` past the reject. `patch_sysuid.py` in Step 8.5 automates both.
+
+One caveat these patches do **not** cover: placement. They remove only the *signature* barrier. An app with `coreApp="true"` plus the system UID must live in `/system/priv-app`, not be `pm install`'d to `/data` — a coreApp is scanned before `/data` is mounted, so from `/data` it bootloops on the next reboot. Signature and placement are two separate problems.
+
+### 11 — Sources
 
 - **anestisb / vdexExtractor** — vdex unpacking and un-quickening
 - **AOSP** `art/libdexfile/dex/compact_dex_file.h` — the CompactDex code-item and preheader layout that `cdex2dex.py` implements
 - **4PDA post #81** (topic 1085149) — notes that `services.jar` is patched to disable the system-app signature check
 
 > [!TIP]
-> **Bottom line:** the patch is three constant-return stubs plus one branch redirect (the installPackageLI aco whitelist) in `PackageManagerService`, assembled as `dex 039` with `smali a -a 28`. With the converter in this guide you can rebuild `services.jar` from any ECarX E02 firmware yourself.
+> **Bottom line:** the patch is three method stubs (two return 0, one return-void) plus three branch redirects (the installPackageLI aco whitelist, and the two system-UID guards) in `PackageManagerService` / `PackageManagerServiceUtils`, assembled as `dex 039` with `smali a -a 28`. With the converter in this guide you can rebuild `services.jar` from any ECarX E02 firmware yourself.
