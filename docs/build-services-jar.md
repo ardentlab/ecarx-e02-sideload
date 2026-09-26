@@ -205,8 +205,6 @@ UART gives you a shell inside the IHU. You use that shell to pull `services.vdex
 
 - Set **Serial line** to your COMx (the number Device Manager showed)
 
-- 
-
   **PuTTY** — Set PuTTY Speed (baud rate)
   ```text
   921600
