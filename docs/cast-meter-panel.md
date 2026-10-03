@@ -72,7 +72,7 @@ The module does three things at the same time:
 | **Rooted IHU with Magisk** | Written on Magisk 30.7. Magisk 26+ is the minimum. |
 | **UART / PuTTY root access** | 921600 baud. This is also how you fix things if something goes wrong, so do not skip it. |
 | **Linux or WSL machine** | Needs `apktool`, `jarsigner`, `zipalign` and `keytool` on PATH — 1.2 below installs all four. Not needed if you use the ready-made APK. |
-| **USB pendrive** | With a folder named `mod`. Only the centre console socket is wired to the head unit. Every other USB port in the car only charges. |
+| **USB pendrive** | To move files between your PC and the car, in a folder named `mod`. Only the centre console socket is wired to the head unit. Every other USB port in the car only charges. |
 
 > [!TIP]
 > **Already have Zygisk and Vector** (for example from the [Steering Wheel Button Remap](steering-button-remap.md))? Skip Steps 2 and 3. Check with `/data/adb/modules/zygisk_vector/cli status`.
@@ -80,7 +80,7 @@ The module does three things at the same time:
 **1.2 — Install WSL & its tools**
 
 > [!TIP]
-> **Already have WSL and the tools, or using the ready-made APK? Skip the whole of 1.2.** Run `wsl -l -v` in PowerShell, then `which apktool jarsigner zipalign keytool` inside Ubuntu. If the first lists an Ubuntu distro and the second prints four paths, your machine is ready. Go straight to [Step 2](#step-2--enable-zygisk).
+> **Already have WSL and the tools, or using the ready-made APK? Skip the whole of 1.2.** Run `wsl -l -v` in PowerShell, then `which apktool jarsigner zipalign keytool` inside Ubuntu. If the first lists an Ubuntu distro and the second prints four paths, your machine is ready. Go straight to [Step 2](#step-2--enable-zygisk). There is nothing here to reinstall, update or repeat.
 
 If you do not have it: the build runs inside Ubuntu, so install it first. Run this in **PowerShell as Administrator**, then restart Windows.
 
@@ -97,20 +97,31 @@ sudo apt-get update
 sudo apt-get install -y apktool zipalign openjdk-17-jdk-headless
 ```
 
+| Package | What it gives you |
+|---|---|
+| **apktool** | `apktool` — builds the module project into an unsigned APK. |
+| **zipalign** | `zipalign` — aligns the signed APK. This is the last step before you can install it. |
+| **openjdk-17-jdk-headless** | `jarsigner` and `keytool` — signs the APK and makes the signing key the first time you run it. The JRE is not enough. `jarsigner` only comes with the JDK. |
+
 Check all four are on your PATH before you carry on. The builder stops with an error if one is missing:
 
 **WSL** — Verify the toolchain
 ```bash
+apktool --version
 which apktool jarsigner zipalign keytool
 ```
 
 **Output** — Four paths, one per tool
 ```text
+2.7.0-dirty
 /usr/bin/apktool
 /usr/bin/jarsigner
 /usr/bin/zipalign
 /usr/bin/keytool
 ```
+
+> [!TIP]
+> **Use the version apt gives you.** This was written on Ubuntu 24.04 in WSL2, where `apt` installs apktool 2.7. The builder writes an **apktool 2.x** project file, so that is the version you want. If you install 3.x by hand it complains about `apktool.yml` instead. [Step 4](#step-4--build-the-module) has the fix if that happens.
 
 > [!CAUTION]
 > **Safety:** test only with the car **parked and the engine running**, never while driving. The meter panel shows your speed and warning lights, and while an app is cast they are gone. Use this responsibly.
@@ -129,7 +140,7 @@ su
 The UART shell starts as a normal user, and **the rollback below needs root as well**, so run `su` before anything else. The prompt changes from `$` to `#`. Every reboot puts you back to a normal user, so run `su` again each time you reconnect.
 
 > [!CAUTION]
-> **This is the first step that changes how the unit boots.** Copy the rollback below and keep it somewhere you can reach without the car screen, then carry on.
+> **This is the first step that changes how the unit boots.** Everything before this only read things. Copy the rollback below and keep it somewhere you can reach without the car screen, then carry on.
 
 **UART** — ROLLBACK — keep this handy first
 ```bash
@@ -159,7 +170,7 @@ After it comes back, the Magisk app home screen should show **Zygisk: Yes**.
 
 `UART · PuTTY`
 
-Vector is the maintained replacement for LSPosed, the Xposed framework that loads the module. The original LSPosed is archived and no longer updated. Vector v2.2 works on Android 8.1 to 17 and needs Magisk 26+ with Zygisk. The S70 is well inside that range.
+Vector is the maintained replacement for LSPosed, the Xposed framework that loads the module. The original LSPosed is archived and no longer updated. Vector comes from the same developer who kept the LSPosed fork going. Vector v2.2 works on Android 8.1 to 17 and needs Magisk 26+ with Zygisk. The S70 is well inside that range.
 
 | What to download | Where |
 |---|---|
@@ -168,7 +179,7 @@ Vector is the maintained replacement for LSPosed, the Xposed framework that load
 Scroll to **Assets** on that release page and take the file ending in `-Release.zip`. Skip the `-Debug.zip` file and skip anything marked `canary`. Those are test builds.
 
 > [!CAUTION]
-> **Do not use v2.1.** It has a bug where modules load but no hooks actually run. v2.2 fixes it.
+> **Do not use v2.1.** It has a bug where modules load but no hooks actually run. v2.2 fixes it. Take the `Release` file, not `Debug`.
 
 `Manual · pendrive`
 
@@ -178,6 +189,8 @@ Put the release zip in the `mod` folder on the pendrive, and plug it into the **
 ```bash
 su
 ```
+
+You rebooted at the end of Step 2, so you are a normal user again. Become root first. Both the rollback and the install below need it.
 
 **UART** — ROLLBACK — removes Vector entirely
 ```bash
@@ -191,7 +204,7 @@ magisk --install-module /mnt/media_rw/*/mod/Vector-*-Release.zip
 reboot
 ```
 
-The framework only loads after the unit comes back up, so the reboot is part of the install, not optional. When it is back, reconnect UART and become root again before you check:
+Magisk checks every file against its checksum while it installs. The framework only loads after the unit comes back up, so the reboot is part of the install, not optional. When it is back, reconnect UART and become root again before you check:
 
 **UART** — Become root — again, after the reboot
 ```bash
@@ -203,10 +216,10 @@ su
 /data/adb/modules/zygisk_vector/cli status
 ```
 
-You should get the framework version and the API version.
+You should get the framework version, the API version, and `Enabled Modules: 0` — or more, if you already installed another module such as the [Steering Wheel Button Remap](steering-button-remap.md).
 
 > [!TIP]
-> **Use the CLI, not the manager app.** The ECarX launcher closes any app that is not on its whitelist, so the Vector manager app keeps getting killed. Everything in this guide is done from UART with `/data/adb/modules/zygisk_vector/cli`.
+> **Use the CLI, not the manager app.** Vector comes with a command line tool at `/data/adb/modules/zygisk_vector/cli`. It has `status`, `modules`, `scope`, `config`, `db` and `log` commands. This matters on this head unit: the ECarX launcher closes any app that is not on its whitelist, so the manager app keeps getting killed. Doing everything from UART avoids that.
 
 ## Step 4 — Build the Module
 
@@ -227,7 +240,7 @@ Or build it yourself.
 > [!TIP]
 > **Get the builder:** [scripts/build-castbar.sh](../scripts/build-castbar.sh) (~48 KB). Open it on GitHub and use the **Download raw file** button at the top right of the file view.
 
-Read it before you run it — it is plain bash.
+Read it before you run it — it is plain bash, and [4.3](#43--the-full-source) explains where to find every part.
 
 ### 4.1 — Get the script into your Linux / WSL home folder
 
@@ -263,7 +276,7 @@ cd ~
 bash build-castbar.sh
 ```
 
-Running it with `bash` means you never need `chmod +x`. If it stops with "not found in PATH", a tool from [Step 1.2](#step-1--prerequisites) is missing — the script is not broken.
+Running it with `bash` means you never need `chmod +x`. The script checks that `apktool`, `jarsigner`, `zipalign` and `keytool` are all on your PATH, and stops with "not found in PATH" if one is missing. So if it fails here, a tool from [Step 1.2](#step-1--prerequisites) is missing — the script is not broken.
 
 **Output** — A successful build ends like this
 ```text
@@ -273,10 +286,51 @@ DONE -> /home/you/CastBar-signed.apk
 -rw-r--r-- 1 you you 11937 Oct  1 00:09 /home/you/CastBar-signed.apk
 ```
 
-The file you want is `~/CastBar-signed.apk`. Copy it to the `mod` folder on your pendrive for [Step 5](#step-5--install--activate).
+> [!WARNING]
+> **Two warnings you can ignore.** apktool may print `Could not extract resource /prebuilt/linux/aapt_64 (defaulting to $PATH binary)`, and jarsigner will say `The signer's certificate is self-signed`. Both are normal. A self-signed certificate is the right thing here. This is your own module, not something that has to match a vendor key.
+
+The file you want is `~/CastBar-signed.apk`, about 12 KB. Copy it to the `mod` folder on your pendrive for [Step 5](#step-5--install--activate).
 
 > [!WARNING]
 > **Keep `~/castbar.keystore`.** It is the signing key made on the first build. Later updates must be signed with the same key, or `pm install -r` fails and you have to uninstall and set the module up again.
+
+> [!WARNING]
+> **If apktool rejects apktool.yml:** the format of that file changes between apktool major versions, and the script writes the 2.x format. If yours complains, run `apktool d` on any small APK, copy the `apktool.yml` it produces into `~/CastBar/`, and build again.
+
+### 4.3 — The full source
+
+`Reference`
+
+**You do not need to run anything here.** The complete builder lives in [scripts/build-castbar.sh](../scripts/build-castbar.sh) — the same file you copied in 4.1. It writes, in order:
+
+| Part | What it is |
+|---|---|
+| `apktool.yml` | apktool 2.x project metadata |
+| `AndroidManifest.xml` | Declares the package `com.ardentlab.cast` as an Xposed module |
+| `res/values/arrays.xml` | The module scope: `com.android.systemui` and `android` |
+| `assets/xposed_init` | Points the framework at the hook class |
+| `res/drawable/cast_off.xml`, `cast_on.xml` | The white empty and filled screen icons, as vector drawables |
+| `smali/com/ardentlab/cast/Hook.smali` | The SystemUI side: inserts the button into the bottom bar and keeps the navbar button order |
+| `smali/com/ardentlab/cast/CastClick.smali` | The button's click handler: moves the focused app to the meter panel and back |
+| `smali/com/ardentlab/cast/SysHook.smali` | The `system_server` side: stops Android restarting the app on a display move |
+| `smali/com/ardentlab/cast/NavTrick.smali`, `NavInfo.smali` | The fake navigation stream that lets the steering POWER button switch the meter panel to HDMI |
+
+It then builds with apktool, creates `~/castbar.keystore` the first time you run it, and signs and aligns the APK.
+
+### What the hook actually does
+
+One module runs in two processes. Vector loads the same class into SystemUI and into `system_server`, and the class checks which one it is in before it hooks anything. That is why the scope needs both `com.android.systemui/0` and `system/0`.
+
+| Where | Method | Behaviour |
+|---|---|---|
+| systemui | EcarxBars.getNavigationBarView | After the bar is built, insert the cast button next to the all-apps button, with the same size and spacing |
+| system_server | ActivityRecord.ensureActivityConfiguration | Note whether the app has moved to another display since it was last told, then clear the note when the call is done |
+| system_server | ActivityRecord.shouldRelaunchLocked | Return false when the app is on the meter panel or moving between displays, so Android does not restart it |
+
+> [!TIP]
+> **How a tap moves the app.** The tap is not a hook. The button's own click handler asks Android for the focused app with `getFocusedStackInfo`, skips it if it is the launcher or is not on the IHU screen, and calls `moveStackToDisplay(stackId, 1)`. On the first cast it also starts the fake navigation stream, so the steering POWER button switches the meter panel to HDMI. Uncast moves the same app back to display 0.
+
+Everything is done through reflection inside SystemUI and `system_server`, not with the `am` shell command, so nothing needs a root shell once the module is installed. [Project Notes](#project-notes) parts 2 to 4 explain how each piece was worked out.
 
 ## Step 5 — Install & Activate
 

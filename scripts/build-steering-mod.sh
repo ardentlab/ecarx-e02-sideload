@@ -691,7 +691,7 @@ if [ ! -f "$KS" ]; then
   keytool -genkeypair -v -keystore "$KS" -alias swmod \
     -keyalg RSA -keysize 2048 -validity 10000 \
     -storepass android -keypass android \
-    -dname "CN=SWMod, O=ArdentLab"
+    -dname "CN=SWMod, OU=RD, O=ArdentLab, L=KL, ST=KL, C=MY"
 fi
 
 echo "== signing =="

@@ -2,7 +2,7 @@
 
 Short press `Hi Proton` to change drive mode. Hold it and the voice assistant still comes up. Hold the call button to open the 360 camera. A short press still answers calls. The apps are hooked while they run, so no system file is changed and one command undoes everything.
 
-**Brand:** Proton · **IHU:** ECarX E02 · V333 · **Android:** 9 · **Method:** Xposed runtime hooks · **System files changed:** None
+**Brand:** Proton · **Model:** S70 · **IHU:** ECarX E02 · V333 · **Android:** 9 · **Method:** Xposed runtime hooks · **System files changed:** None
 
 ---
 
@@ -29,10 +29,10 @@ Short press `Hi Proton` to change drive mode. Hold it and the voice assistant st
 
 Only these steps change anything on the unit. Do them in order and the buttons will work at the end.
 
-- [Step 1](#step-1--prerequisites) — **Prerequisites.** Rooted unit, UART access, and WSL with the four build tools — skip 1.2 if you already have them.
-- [Step 6](#step-6--enable-zygisk) — **Enable Zygisk** in Magisk, then reboot.
-- [Step 7](#step-7--install-the-xposed-framework) — **Install Vector**, the Xposed framework the module loads through, then reboot.
-- [Step 8](#step-8--build-the-module) — **Build the module APK** with the one-shot builder script.
+- [Step 1](#step-1--prerequisites) — **Prerequisites.** Rooted unit, UART access, and WSL with the four build tools — skip 1.2 if you already have them or use the ready-made APK.
+- [Step 6](#step-6--enable-zygisk) — **Enable Zygisk** in Magisk, then reboot. Skip if Magisk already shows `Zygisk: Yes`.
+- [Step 7](#step-7--install-the-xposed-framework) — **Install Vector**, the Xposed framework the module loads through, then reboot. Skip if it is already installed.
+- [Step 8](#step-8--build-the-module) — **Build the module APK** with the one-shot builder script, or download the ready-made APK.
 - [Step 9](#step-9--install--activate) — **Install and activate it** — install the APK, set its scope, reboot.
 - [Step 10](#step-10--test) — **Test in the car**, parked, with a phone paired.
 
@@ -41,6 +41,15 @@ Only these steps change anything on the unit. Do them in order and the buttons w
 ## Step 0 — What You Get
 
 `Overview`
+
+**Reference** — The full flow
+```text
+Step 6   UART    → enable Zygisk in Magisk
+Step 7   UART    → install the Vector framework
+Step 8   WSL     → build SWMod-signed.apk with one script
+Step 9   UART    → install, enable, set scope, reboot
+Step 10  Car     → press and hold the buttons to test
+```
 
 Two steering wheel buttons get a new job when you hold them. On **Hi Proton**, voice moves from a short press to a hold, and the short press now changes drive mode instead. On the call button nothing changes on a short press — holding it opens the 360 camera.
 
@@ -62,10 +71,11 @@ The same method works for any steering button on this platform. [Step 4](#step-4
 
 | What | Why |
 |---|---|
+| **Proton S70 (ECarX IHU524P)** | Tested on firmware V333. |
 | **Rooted IHU with Magisk** | Written on Magisk 30.7. Magisk 26+ is the minimum. |
 | **UART / PuTTY root access** | 921600 baud. This is also how you fix things if something goes wrong, so do not skip it. |
-| **Linux or WSL machine** | Needs `apktool`, `jarsigner`, `zipalign` and `keytool` on PATH — 1.2 below installs all four. |
-| **USB pendrive** | To move files between your PC and the car. Only the centre console socket is wired to the head unit. Every other USB port in the car only charges. |
+| **Linux or WSL machine** | Needs `apktool`, `jarsigner`, `zipalign` and `keytool` on PATH — 1.2 below installs all four. Not needed if you use the ready-made APK. |
+| **USB pendrive** | To move files between your PC and the car, in a folder named `mod`. Only the centre console socket is wired to the head unit. Every other USB port in the car only charges. |
 
 > [!TIP]
 > **Already have Zygisk and Vector** (for example from [Cast to Meter Panel](cast-meter-panel.md))? Skip Steps 6 and 7. Check with `/data/adb/modules/zygisk_vector/cli status`.
@@ -73,7 +83,7 @@ The same method works for any steering button on this platform. [Step 4](#step-4
 **1.2 — Install WSL & its tools**
 
 > [!TIP]
-> **Already have WSL and the tools? Skip the whole of 1.2.** Run `wsl -l -v` in PowerShell, then `which apktool jarsigner zipalign keytool` inside Ubuntu. If the first lists an Ubuntu distro and the second prints four paths, your machine is ready. Go straight to [Step 6](#step-6--enable-zygisk). There is nothing here to reinstall, update or repeat.
+> **Already have WSL and the tools, or using the ready-made APK? Skip the whole of 1.2.** Run `wsl -l -v` in PowerShell, then `which apktool jarsigner zipalign keytool` inside Ubuntu. If the first lists an Ubuntu distro and the second prints four paths, your machine is ready. Go straight to [Step 6](#step-6--enable-zygisk). There is nothing here to reinstall, update or repeat.
 
 If you do not have it: the build runs inside Ubuntu, so install it first. Run this in **PowerShell as Administrator**, then restart Windows.
 
@@ -263,7 +273,7 @@ am broadcast -a ecarx.settings.vehicle.setting.widget.CarSettingWidget.action.AC
 
 `UART · PuTTY`
 
-Zygisk is the part of Magisk that lets an Xposed framework load. It is off by default.
+Zygisk is the part of Magisk that lets an Xposed framework load. It is off by default. Skip this step if the Magisk app already shows **Zygisk: Yes**.
 
 **UART** — Become root — before anything else in this step
 ```bash
@@ -331,7 +341,7 @@ rm -rf /data/adb/modules/zygisk_vector
 reboot
 ```
 
-**UART** — Install the module, then reboot
+**UART** — Install Vector, then reboot
 ```bash
 magisk --install-module /mnt/media_rw/*/mod/Vector-*-Release.zip
 reboot
@@ -359,6 +369,16 @@ You should get the framework version, the API version, and `Enabled Modules: 0` 
 `WSL Ubuntu`
 
 The builder below does everything on its own. It creates the apktool project, writes the manifest, the resources, the Xposed entry point and the hook class, builds the APK, makes a signing key the first time you run it, then signs and aligns the APK.
+
+> [!TIP]
+> **Want to skip the build?** Download the ready-made [apk/SWMod-signed.apk](../apk/SWMod-signed.apk) (~6 KB), put it in the `mod` folder on the pendrive, and go straight to [Step 9](#step-9--install--activate). It is the same module the builder makes, already signed.
+>
+> SHA-256: `8ff699b4dc723fb354195fa23c0c6ff66ca55f2a56666a70f32c363d13310afd`
+
+> [!WARNING]
+> **Pick one and stay with it.** The ready-made APK and your own build are signed with different keys. Android will not install one over the other with `pm install -r`. To switch, run `pm uninstall com.protons70.swmod` first, then install and do all of [Step 9](#step-9--install--activate) again.
+
+Or build it yourself.
 
 > [!TIP]
 > **Get the builder:** [scripts/build-steering-mod.sh](../scripts/build-steering-mod.sh) (~18 KB). Open it on GitHub and use the **Download raw file** button at the top right of the file view.
@@ -391,13 +411,6 @@ cp /mnt/c/Users/YOUR_USERNAME/Downloads/build-steering-mod.sh ~/
 cp /mnt/c/Users/YOUR_USERNAME/OneDrive/Downloads/build-steering-mod.sh ~/
 ```
 
-Rather paste it? Open the script on GitHub, use the **Copy raw file** button, then make the file by hand, paste, and press `Ctrl+D` to finish:
-
-**WSL** — Paste the source into a new file
-```bash
-cat > ~/build-steering-mod.sh
-```
-
 ### 8.2 — Run it
 
 **WSL** — Build, sign and align in one go
@@ -406,23 +419,23 @@ cd ~
 bash build-steering-mod.sh
 ```
 
-Running it with `bash` means you never need `chmod +x`. The script checks that `apktool`, `jarsigner`, `zipalign` and `keytool` are all on your PATH, and stops with a clear message if one is missing. So if it fails here, a tool is missing — the script is not broken.
+Running it with `bash` means you never need `chmod +x`. The script checks that `apktool`, `jarsigner`, `zipalign` and `keytool` are all on your PATH, and stops with "not found in PATH" if one is missing. So if it fails here, a tool from [Step 1.2](#step-1--prerequisites) is missing — the script is not broken.
 
 **Output** — A successful build ends like this
 ```text
-== building ==
-I: Built apk into: /home/you/SWMod.apk
-== signing ==
-jar signed.
 == aligning ==
 
 DONE -> /home/you/SWMod-signed.apk
+-rw-r--r-- 1 you you 6344 Oct  3 17:59 /home/you/SWMod-signed.apk
 ```
 
 > [!WARNING]
 > **Two warnings you can ignore.** apktool may print `Could not extract resource /prebuilt/linux/aapt_64 (defaulting to $PATH binary)`, and jarsigner will say `The signer's certificate is self-signed`. Both are normal. A self-signed certificate is the right thing here. This is your own module, not something that has to match a vendor key.
 
-The file you want is `~/SWMod-signed.apk`, roughly 90 KB. Copy it to your pendrive for [Step 9](#step-9--install--activate).
+The file you want is `~/SWMod-signed.apk`, about 6 KB. Copy it to the `mod` folder on your pendrive for [Step 9](#step-9--install--activate).
+
+> [!WARNING]
+> **Keep `~/swmod.keystore`.** It is the signing key made on the first build. Later updates must be signed with the same key, or `pm install -r` fails and you have to uninstall and set the module up again.
 
 > [!WARNING]
 > **If apktool rejects apktool.yml:** the format of that file changes between apktool major versions, and the script writes the 2.x format. If yours complains, run `apktool d` on any small APK, copy the `apktool.yml` it produces into `~/SWMod/`, and build again.
@@ -490,8 +503,9 @@ You may see a line like `avc: denied ... permissive=1`. That is an SELinux notic
 > [!WARNING]
 > **Vector does not read the scope from the module.** The module says which apps it wants, but Vector starts with an empty list. You have to set it yourself with the command above, then reboot. With no scope the module is on but does nothing, which is an easy way to lose an hour.
 
-**UART** — Reboot — hooks load on the next boot
+**UART** — Clear the log and reboot — hooks load on the next boot
 ```bash
+/data/adb/modules/zygisk_vector/cli log clear
 reboot
 ```
 
@@ -548,7 +562,7 @@ Car parked, handbrake up, engine running. Pair a phone over Bluetooth **before**
 >
 > - You really want the buttons back to stock. A short press on `Hi Proton` goes back to voice, and the call button stops opening the 360 camera.
 > - You are fine with the deletions. The second block removes the module APK. The third deletes `/data/adb/modules/zygisk_vector` and turns Zygisk off.
-> - **Any other Xposed module you use stops working too.** They all load through Vector, so removing it disables every module on the unit, not just this one.
+> - **Any other Xposed module you use stops working too**, for example [Cast to Meter Panel](cast-meter-panel.md). They all load through Vector, so removing it disables every module on the unit, not just this one.
 > - Your UART cable is connected and you can get a root shell, so you can recover if a reboot goes wrong.
 >
 > **Not sure?** Run only the first block. Disabling can be undone — `enable` brings the mod straight back, with nothing to rebuild or reinstall. Stop there and you lose nothing.
@@ -607,6 +621,8 @@ reboot
 | btphone onHkLongPress hooks = 0 | The method is somewhere else on your firmware. Trace it with the [Step 4](#step-4--trace-any-button-yourself) filter and note which class the log prints. |
 | Camera opens *and* the car dials someone | btphone is not in scope, or its hook count is 0. Both have to be right before the redial is blocked. |
 | Voice no longer wakes at all | Disable the module and check that voice comes back. Then check that `onHkLongPress` hooked successfully in voicemaster. |
+| `pm install -r` fails with a signature error | The APK was signed with a different key (switching between the ready-made APK and your own build, or the keystore was lost). Run `pm uninstall com.protons70.swmod`, install again, then enable and set the scope again. |
+| The build stops with "not found in PATH" | Install the tools in [Step 1.2](#step-1--prerequisites). |
 | Unit will not boot after enabling Zygisk | Connect UART and run the Zygisk rollback from [Step 6](#step-6--enable-zygisk). Magisk's bootloop protection may have turned the modules off for you already. |
 
 ## Project Notes
@@ -619,4 +635,4 @@ reboot
 - **Tested on one car.** Proton S70 Flagship, firmware V333. Other variants will probably have different class names, and maybe different key ids. That is what [Step 4](#step-4--trace-any-button-yourself) is for.
 
 > [!WARNING]
-> **Updating the module later:** rebuild it, copy the new APK across, and `pm install -r` over the top. The module stays enabled and keeps its scope. You only need a reboot, or to restart the hooked apps, for the new code to take effect.
+> **Updating the module later:** rebuild it (or download the newer ready-made APK, if that is what you installed), copy the new APK across, and `pm install -r` over the top. The module stays enabled and keeps its scope. You only need a reboot, or to restart the hooked apps, for the new code to take effect.
