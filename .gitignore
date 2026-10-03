@@ -49,6 +49,7 @@ MOD/
 # MTKClient. Only files placed in preloaders/ are allowed through.
 !preloaders/
 !preloaders/*.bin
+
 # ─── Exception: our own Xposed module APKs ────────────────────────────
 # Built from the scripts/ in this repo and signed with our own key — no
 # vendor code inside. Only files placed in apk/ are allowed through.

@@ -1,10 +1,13 @@
 #!/bin/bash
 # =====================================================================
-#  Cast navbar button (v1) - Vector/Xposed module builder
+#  Cast to Meter Panel - Vector/Xposed module builder
 #  Inserts a white cast button (VECTOR drawable, sharp at any size)
-#  into the ECarX bottom nav bar, cloning the home button's size and
-#  spacing. Empty screen = not casting, filled screen = casting.
-#  v1 = visual + toggle only (cast action = v2).
+#  into the ECarX bottom nav bar, cloning the all-apps button's size
+#  and spacing. Empty screen = not casting, filled screen = casting.
+#  Tap moves the focused app to the meter panel (display 1) and back,
+#  streams fake nav status so steering POWER switches the meter panel
+#  to HDMI, and hooks system_server so the app is not relaunched.
+#  Scope: com.android.systemui/0 system/0
 #  Needs: apktool (2.x), jarsigner, zipalign, keytool
 #  Output: ~/CastBar-signed.apk
 # =====================================================================

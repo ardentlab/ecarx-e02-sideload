@@ -67,6 +67,9 @@ The same method works for any steering button on this platform. [Step 4](#step-4
 | **Linux or WSL machine** | Needs `apktool`, `jarsigner`, `zipalign` and `keytool` on PATH — 1.2 below installs all four. |
 | **USB pendrive** | To move files between your PC and the car. Only the centre console socket is wired to the head unit. Every other USB port in the car only charges. |
 
+> [!TIP]
+> **Already have Zygisk and Vector** (for example from [Cast to Meter Panel](cast-meter-panel.md))? Skip Steps 6 and 7. Check with `/data/adb/modules/zygisk_vector/cli status`.
+
 **1.2 — Install WSL & its tools**
 
 > [!TIP]
@@ -346,7 +349,7 @@ su
 /data/adb/modules/zygisk_vector/cli status
 ```
 
-You should get the framework version, the API version, and `Enabled Modules: 0`.
+You should get the framework version, the API version, and `Enabled Modules: 0` — or more, if you already installed another module such as [Cast to Meter Panel](cast-meter-panel.md).
 
 > [!TIP]
 > **Use the CLI, not the manager app.** Vector comes with a command line tool at `/data/adb/modules/zygisk_vector/cli`. It has `status`, `modules`, `scope`, `config`, `db` and `log` commands. This matters on this head unit: the ECarX launcher closes any app that is not on its whitelist, so the manager app keeps getting killed. Doing everything from UART avoids that.
