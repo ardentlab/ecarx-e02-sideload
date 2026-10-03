@@ -63,6 +63,7 @@ Changes for a unit that already has root and Magisk from guide 3. Each one stand
 | Guide | Tested on | What it does |
 |---|---|---|
 | **[Steering Wheel Button Remap](docs/steering-button-remap.md)** | S70 · V333 | Short press on Hi Proton changes the drive mode, holding the call button opens the 360 camera. The apps are hooked while they run, so no system file is changed. Builder script in [`scripts/`](scripts/build-steering-mod.sh). |
+| **[Cast to Meter Panel](docs/cast-meter-panel.md)** | S70 · V333 | A cast button in the bottom bar moves the app on screen to the meter panel and back, without restarting it. Runs in memory, so no system file is changed. Builder script in [`scripts/`](scripts/build-castbar.sh), or the ready-made [APK](apk/CastBar-signed.apk). |
 
 ---
 

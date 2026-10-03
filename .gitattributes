@@ -13,3 +13,6 @@ LICENSE text eol=lf
 *.png  binary
 *.gif  binary
 *.webp binary
+
+# Built module APKs
+*.apk  binary
